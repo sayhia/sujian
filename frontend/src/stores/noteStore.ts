@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Note, CreateNoteRequest, NoteStats, SearchResult, TagInfo } from '../types';
-import * as NoteHandler from '../../bindings/panda-time-note/handlers/notehandler';
+import * as NoteHandler from '../../bindings/panda-time-note/backend/handlers/notehandler';
 
 export const useNoteStore = defineStore('note', () => {
   const notes = ref<Note[]>([]);

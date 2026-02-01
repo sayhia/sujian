@@ -353,7 +353,7 @@ import { useI18n } from 'vue-i18n';
 import { useSettingsStore } from '../stores/settingsStore';
 import type { Theme, FontSize, ThemePack } from '../stores/settingsStore';
 import { useNoteStore } from '../stores/noteStore';
-import * as NoteHandler from '../../bindings/panda-time-note/handlers/notehandler';
+import * as NoteHandler from '../../bindings/panda-time-note/backend/handlers/notehandler';
 import {
   Settings,
   X,
