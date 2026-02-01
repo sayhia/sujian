@@ -6,9 +6,9 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
-	"panda-time-note/db"
-	"panda-time-note/handlers"
-	"panda-time-note/services"
+	"panda-time-note/backend/db"
+	"panda-time-note/backend/handlers"
+	"panda-time-note/backend/services"
 )
 
 //go:embed all:frontend/dist

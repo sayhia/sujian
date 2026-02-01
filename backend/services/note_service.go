@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"panda-time-note/db"
-	"panda-time-note/models"
+	"panda-time-note/backend/db"
+	"panda-time-note/backend/models"
 )
 
 type NoteService struct {

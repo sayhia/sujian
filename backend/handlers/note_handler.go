@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"panda-time-note/models"
-	"panda-time-note/services"
+	"panda-time-note/backend/models"
+	"panda-time-note/backend/services"
 )
 
 // NoteHandler handles note-related operations
