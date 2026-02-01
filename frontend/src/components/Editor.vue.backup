@@ -1,0 +1,3162 @@
+<template>
+  <div class="editor-container">
+    <!-- Global Aurora Background -->
+    <div class="aurora-bg-layer">
+      <div class="aurora-glow aurora-glow-1"></div>
+      <div class="aurora-glow aurora-glow-2"></div>
+      <div class="aurora-glow aurora-glow-3"></div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <header class="editor-header">
+      <button class="nav-button back-button" @click="handleCancel" :aria-label="t('editor.back')">
+        <ArrowLeft class="nav-icon" />
+        <span class="nav-text">{{ t('editor.back') }}</span>
+      </button>
+
+      <div class="header-center">
+        <div class="page-indicator" :class="currentNoteType">
+          <Sparkles v-if="currentNoteType === 'quick'" class="indicator-icon" />
+          <FileText v-else class="indicator-icon" />
+          <span class="page-title">
+            {{ props.mode === 'create' ? (currentNoteType === 'article' ? t('editor.newArticle') : t('editor.newNote')) : (currentNoteType === 'article' ? '编辑文章' : '编辑灵感小记') }}
+          </span>
+        </div>
+        
+        <!-- 类型切换器（仅创建模式） -->
+        <transition name="type-switch">
+          <div v-if="showTypeSelector && props.mode === 'create'" class="type-switcher">
+            <button
+              type="button"
+              class="type-option"
+              :class="{ active: currentNoteType === 'quick' }"
+              @click="switchNoteType('quick')"
+              :aria-label="t('editor.quickNote')"
+              :aria-pressed="currentNoteType === 'quick'"
+              title="灵感小记"
+            >
+              <Sparkles class="type-option-icon" />
+            </button>
+            <button
+              type="button"
+              class="type-option"
+              :class="{ active: currentNoteType === 'article' }"
+              @click="switchNoteType('article')"
+              :aria-label="t('editor.article')"
+              :aria-pressed="currentNoteType === 'article'"
+              title="文章"
+            >
+              <FileText class="type-option-icon" />
+            </button>
+          </div>
+        </transition>
+      </div>
+
+      <div class="header-actions">
+        <button 
+          class="nav-button action-button secondary-button" 
+          @click="handleCancel"
+          :aria-label="t('editor.cancel')"
+        >
+          <X class="nav-icon" />
+          <span class="nav-text">{{ t('editor.cancel') }}</span>
+        </button>
+
+        <button 
+          class="nav-button action-button primary-button" 
+          @click="handleSave"
+          :disabled="loading || !isFormValid"
+          :aria-label="t('editor.save')"
+        >
+          <Check v-if="!loading" class="nav-icon" />
+          <Loader2 v-else class="nav-icon spinning" />
+          <span class="nav-text">{{ loading ? t('editor.saving') : t('editor.save') }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 主编辑区域 -->
+    <main class="editor-main">
+      <!-- 加载骨架屏 -->
+      <transition name="skeleton">
+        <div v-if="!mounted" class="skeleton-loader">
+          <div class="skeleton-title"></div>
+          <div class="skeleton-tags"></div>
+          <div class="skeleton-content"></div>
+        </div>
+      </transition>
+
+      <!-- 实际内容 -->
+      <transition name="fade-in">
+        <div v-show="mounted" class="editor-content-wrapper">
+          <!-- 中央编辑区 -->
+          <div class="editor-center-wrapper">
+            <div class="editor-center editor-card">
+              <form class="editor-form" @submit.prevent="handleSave">
+                <!-- 标题输入 -->
+                <div class="title-section" :class="[{ 'has-error': titleError, 'focused': titleFocused, 'dirty': titleDirty }, currentNoteType]">
+                  <div class="title-icon-wrapper">
+                    <Edit3 class="title-icon" />
+                  </div>
+                  <label for="title-input" class="visually-hidden">{{ t('editor.titleLabel') }}</label>
+                  <input
+                    id="title-input"
+                    ref="titleInputRef"
+                    v-model="formData.title"
+                    type="text"
+                    class="title-input"
+                    :placeholder="t('editor.titlePlaceholder')"
+                    :class="{ 'is-invalid': titleError }"
+                    @blur="titleTouched = true; titleFocused = false"
+                    @focus="titleFocused = true"
+                    @input="titleDirty = true"
+                    required
+                    :aria-describedby="titleError ? 'title-error' : undefined"
+                  />
+                  <div class="title-footer">
+                    <span class="char-count">{{ formData.title.length }}/200</span>
+                  </div>
+                  <div v-if="titleError" id="title-error" class="error-message title-error" role="alert">
+                    <AlertCircle class="error-icon" />
+                    {{ titleError }}
+                  </div>
+                </div>
+
+                  <!-- 标签区域 -->
+                   <div class="tags-section" :class="{ 'focused': tagFocused, 'has-error': tagsLimitWarning }">
+                    <div class="tags-header">
+                      <div class="tags-header-left">
+                        <Hash class="tags-header-icon" />
+                         <div class="tags-header-info">
+                            <h3 id="tags-label" class="tags-header-title">{{ t('editor.tagsLabel') }}</h3>
+                            <span class="tags-count" :class="{ 'near-limit': formData.tags.length >= tagsLimit - 2, 'at-limit': formData.tags.length >= tagsLimit }">
+                              {{ formData.tags.length }}<span class="count-separator">/</span>{{ tagsLimit }}
+                            </span>
+                            <transition name="limit-warning">
+                              <span v-if="tagsLimitWarning" class="tags-limit-warning-icon" aria-live="polite">
+                                ⚠
+                              </span>
+                            </transition>
+                         </div>
+                      </div>
+                      <button 
+                         v-if="formData.tags.length > 0"
+                         type="button"
+                         class="clear-tags-button"
+                         @click="confirmClearTags"
+                         :title="t('editor.clearTags')"
+                         :aria-label="t('editor.clearTags')"
+                       >
+                         <X class="clear-icon" />
+                       </button>
+                    </div>
+                     
+                    <!-- 标签输入区域 - 内联标签显示 -->
+                    <div class="tags-input-container">
+                      <div class="tags-input-wrapper">
+                         <div class="tags-field-wrapper">
+                           <div class="tags-display">
+                             <transition-group name="tag-list" tag="span">
+                               <span
+                                v-for="(tag, index) in formData.tags"
+                                :key="tag"
+                                class="tag-chip"
+                                :class="{ 
+                                  'last-tag': index === formData.tags.length - 1,
+                                  'shake-animation': shakingTag === tag 
+                                }"
+                                @click.right.prevent="showTagColorPicker(tag)"
+                                @click.left.prevent="removeTag(tag)"
+                              >
+                                 <span class="tag-chip-text">#{{ tag }}</span>
+                               </span>
+                             </transition-group>
+                             <input
+                               id="tag-input"
+                               ref="tagInputRef"
+                               v-model="tagInput"
+                               type="text"
+                               class="tags-field"
+                               :placeholder="formData.tags.length === 0 ? t('editor.tagsPlaceholder') : ''"
+                               @keydown="handleTagKeydown"
+                               @input="handleTagInputChange"
+                               @focus="tagFocused = true"
+                               @blur="handleTagBlur"
+                               @paste="handleTagPaste"
+                               aria-labelledby="tags-label"
+                               aria-describedby="tags-count"
+                             />
+                           </div>
+                           <button 
+                             type="button" 
+                             class="add-tag-button"
+                             @click="handleAddTag"
+                             :disabled="!canAddTag"
+                             :title="canAddTag ? t('editor.tagsAdd') : `已达到${tagsLimit}个标签上限`"
+                             :aria-label="canAddTag ? t('editor.tagsAdd') : `已达到${tagsLimit}个标签上限`"
+                           >
+                             <Plus class="add-icon" />
+                           </button>
+                         </div>
+                         
+                         <!-- 输入提示 -->
+                         <div class="tags-input-hint" :class="{ 'focused': tagFocused }">
+                           <span class="hint-text">
+                             <template v-if="tagFocused">
+                               <kbd>Enter</kbd> 添加 · <kbd>Esc</kbd> 取消 · <kbd>Backspace</kbd> 删除末尾
+                             </template>
+                             <template v-else>
+                               <span class="hint-action">点击标签</span> · <span class="hint-shortcut">逗号或 Enter</span> 添加
+                             </template>
+                           </span>
+                         </div>
+                      </div>
+                    </div>
+                     
+                    <!-- 标签建议 -->
+                    <transition name="suggestions">
+                      <div v-if="showTagSuggestions && tagSuggestions.length > 0 && tagFocused" class="tag-suggestions">
+                         <div
+                           v-for="(tag, index) in tagSuggestions"
+                           :key="tag"
+                           class="suggestion-item"
+                           :class="{ 'highlighted': suggestionIndex === index, 'last-item': index === tagSuggestions.length - 1 }"
+                           @click="selectTagSuggestion(tag)"
+                           @mouseover="suggestionIndex = index"
+                         >
+                           <span class="suggestion-text">#{{ tag }}</span>
+                           <span class="suggestion-shortcut">
+                             <kbd v-if="index < 9">{{ index + 1 }}</kbd>
+                           </span>
+                         </div>
+                      </div>
+                    </transition>
+                   </div>
+
+                <!-- 内容编辑区 -->
+                <div class="content-section" :class="[{ 'has-error': contentError, 'focused': contentFocused }, currentNoteType]">
+                  <div class="content-header">
+                    <FileText class="content-icon" />
+                    <div class="content-header-info">
+                       <span id="content-label" class="content-type">{{ t('editor.contentLabel') }}</span>
+                      <span class="content-stats">{{ wordCount }} {{ t('editor.words') }} · {{ readTime }}</span>
+                    </div>
+                  </div>
+                  <MarkdownEditor
+                    v-if="currentNoteType === 'article'"
+                    v-model="formData.content"
+                    :placeholder="t('editor.contentPlaceholder')"
+                    @blur="contentTouched = true"
+                    class="markdown-editor-full"
+                    :class="{ 'is-invalid': contentError }"
+                  />
+                   <textarea
+                    v-else
+                    id="content-input"
+                    v-model="formData.content"
+                    class="content-textarea"
+                    :placeholder="t('editor.contentPlaceholder')"
+                    :class="{ 'is-invalid': contentError }"
+                    @blur="contentTouched = true"
+                    @focus="handleContentFocus"
+                    @input="handleContentChange"
+                    @keydown="handleTextareaKeydown"
+                    required
+                    :aria-labelledby="'content-label'"
+                    :aria-describedby="contentError ? 'content-error' : undefined"
+                  />
+                   <div v-if="contentError" id="content-error" class="error-message content-error" role="alert">
+                    <AlertCircle class="error-icon" />
+                    {{ contentError }}
+                  </div>
+                </div>
+               </form>
+             </div>
+           </div>
+         </div>
+       </transition>
+     </main>
+
+    <!-- 确认对话框 -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showUnsavedDialog" class="modal-backdrop" @click="showUnsavedDialog = false">
+          <div class="modal-content" @click.stop>
+            <div class="modal-header">
+              <AlertTriangle class="modal-icon" />
+              <h3 class="modal-title">{{ t('editor.unsavedChanges') }}</h3>
+            </div>
+              <p class="modal-message">{{ t('editor.unsavedChangesMessage') }}</p>
+              <div class="modal-actions">
+                <button 
+                  class="modal-button secondary" 
+                  @click="showUnsavedDialog = false; emit('cancel')"
+                >
+                  {{ t('editor.discard') }}
+                </button>
+                <button 
+                  class="modal-button primary" 
+                  @click="showUnsavedDialog = false; handleSave()"
+                >
+                  {{ t('editor.save') }}
+                </button>
+              </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Toast 提示 -->
+    <div v-if="toast.show" class="toast-notification" :class="toast.type">
+      <CheckCircle v-if="toast.type === 'success'" class="toast-icon" />
+      <X v-else-if="toast.type === 'error'" class="toast-icon" />
+      <Info v-else class="toast-icon" />
+      <span class="toast-message">{{ toast.message }}</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { 
+  ArrowLeft, X, Check, Loader2, Sparkles, FileText, 
+  Hash, Plus, Info, CheckCircle, Edit3,
+  AlertTriangle, AlertCircle
+} from 'lucide-vue-next';
+import { useTagsManagement } from '../composables/useTagsManagement';
+import MarkdownEditor from './MarkdownEditor.vue';
+import type { Note } from '../types';
+
+interface Props {
+  note: Note | null;
+  mode: 'create' | 'edit';
+  noteType?: 'quick' | 'article';
+  showTypeSelector?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  noteType: 'quick',
+  showTypeSelector: true,
+});
+
+const emit = defineEmits<{
+  save: [data: { title: string; content: string; tags: string[]; type: 'quick' | 'article' }];
+  cancel: [];
+}>();
+
+const { t } = useI18n();
+
+const currentNoteType = ref<'quick' | 'article'>(props.noteType);
+
+const formData = ref({
+  title: '',
+  content: '',
+  tags: [] as string[],
+});
+
+// Tags Management Integration
+const tagsRef = computed({
+  get: () => formData.value.tags,
+  set: (val) => formData.value.tags = val
+});
+
+const {
+  tagInput,
+  showSuggestions: showTagSuggestions,
+  suggestions: tagSuggestions,
+  suggestionIndex,
+  addTag: composableAddTag,
+  removeTag: composableRemoveTag,
+  clearAllTags,
+  shakingTag,
+  getTagColor,
+  setTagColor,
+  tagsLimitWarning,
+  sortAsc: sortTagsAsc
+} = useTagsManagement(tagsRef);
+
+const titleInputRef = ref<HTMLInputElement | null>(null);
+const tagInputRef = ref<HTMLInputElement | null>(null);
+const loading = ref(false);
+const autoSaving = ref(false);
+const titleTouched = ref(false);
+const contentTouched = ref(false);
+const titleFocused = ref(false);
+const tagFocused = ref(false);
+const contentFocused = ref(false);
+const mounted = ref(false);
+
+const lastSaved = ref<string>('');
+const autoSaveTimer = ref<number | null>(null);
+const justSaved = ref(false);
+const contentChanged = ref(false);
+const tagsChanged = ref(false);
+const titleDirty = ref(false);
+const showUnsavedDialog = ref(false);
+const showColorPicker = ref(false);
+const selectedTagColor = ref('');
+const selectedTagForColor = ref<string | null>(null);
+const pendingChanges = ref(false);
+const saveInProgress = ref(false);
+const lastAutoSaveTime = ref(0);
+
+const toast = ref({
+  show: false,
+  message: '',
+  type: 'success' as 'success' | 'error' | 'info',
+});
+
+const originalData = ref({
+  title: '',
+  content: '',
+  tags: [] as string[],
+});
+
+const tagColorPalette = [
+  '#fbbf24', '#f59e0b', '#d97706', '#b45309',
+  '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6',
+  '#ec4899', '#db2777', '#be185d', '#9d174d',
+  '#06b6d4', '#0891b2', '#0e7490', '#155e75',
+  '#10b981', '#059669', '#047857', '#065f46',
+  '#f87171', '#ef4444', '#dc2626', '#b91c1c'
+];
+
+const wordCount = computed(() => {
+  if (!formData.value.content) return 0;
+  return formData.value.content.trim().split(/\s+/).filter(w => w.length > 0).length;
+});
+
+const readTime = computed(() => {
+  const wpm = 200;
+  const minutes = Math.ceil(wordCount.value / wpm);
+  return minutes > 0 ? `${minutes} ${t('editor.minutes')}` : t('editor.lessThanMinute');
+});
+
+const tagsLimit = 10;
+const canAddTag = computed(() => {
+  return tagInput.value.trim() && formData.value.tags.length < tagsLimit;
+});
+
+const titleError = computed(() => {
+  if (!titleTouched.value) return '';
+  if (!formData.value.title || formData.value.title.trim().length === 0) {
+    return t('editor.titleRequired');
+  }
+  if (formData.value.title.length < 2) {
+    return t('editor.titleTooShort');
+  }
+  if (formData.value.title.length > 200) {
+    return t('editor.titleTooLong');
+  }
+  return '';
+});
+
+const contentError = computed(() => {
+  if (!contentTouched.value) return '';
+  if (!formData.value.content || formData.value.content.trim().length === 0) {
+    return t('editor.contentRequired');
+  }
+  if (formData.value.content.length < 5) {
+    return t('editor.contentTooShort');
+  }
+  return '';
+});
+
+const isFormValid = computed(() => {
+  return !titleError.value && !contentError.value;
+});
+
+const hasUnsavedChanges = computed(() => {
+  return (
+    formData.value.title !== originalData.value.title ||
+    formData.value.content !== originalData.value.content ||
+    JSON.stringify(formData.value.tags) !== JSON.stringify(originalData.value.tags)
+  );
+});
+
+watch(() => props.noteType, (newType) => {
+  currentNoteType.value = newType;
+});
+
+watch(() => props.note, (newNote) => {
+  if (newNote) {
+    currentNoteType.value = (newNote.type as 'quick' | 'article') || 'quick';
+    formData.value = {
+      title: newNote.title,
+      content: newNote.content,
+      tags: newNote.tags || [],
+    };
+    originalData.value = { ...formData.value };
+  }
+}, { immediate: true });
+
+watch(() => formData.value.title, () => {
+  pendingChanges.value = true;
+  triggerAutoSave();
+});
+
+watch(() => formData.value.content, () => {
+  contentChanged.value = formData.value.content !== originalData.value.content;
+  pendingChanges.value = true;
+  triggerAutoSave();
+});
+
+watch(() => formData.value.tags, () => {
+  tagsChanged.value = JSON.stringify(formData.value.tags) !== JSON.stringify(originalData.value.tags);
+  pendingChanges.value = true;
+  triggerAutoSave();
+});
+
+watch(showUnsavedDialog, (newValue) => {
+  if (newValue) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+});
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+  toast.value = { show: true, message, type };
+  setTimeout(() => {
+    toast.value.show = false;
+  }, 3000);
+}
+
+function triggerAutoSave() {
+  // 只在编辑模式下触发自动保存
+  if (props.mode !== 'edit') {
+    return;
+  }
+  
+  // 如果已经在保存中，不重复触发
+  if (saveInProgress.value) {
+    return;
+  }
+  
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value);
+  }
+  
+  // 动态调整保存延迟：如果是首次保存或长时间未保存，缩短延迟
+  const timeSinceLastSave = Date.now() - lastAutoSaveTime.value;
+  const saveDelay = timeSinceLastSave > 60000 ? 1000 : 3000;
+  
+  autoSaveTimer.value = window.setTimeout(async () => {
+    if (isFormValid.value && !saveInProgress.value) {
+      saveInProgress.value = true;
+      autoSaving.value = true;
+      lastAutoSaveTime.value = Date.now();
+      
+      const savedData = {
+        title: formData.value.title,
+        content: formData.value.content,
+        tags: formData.value.tags,
+        type: currentNoteType.value,
+      };
+      
+      try {
+        emit('save', savedData);
+        
+        // 模拟API调用延迟
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        autoSaving.value = false;
+        pendingChanges.value = false;
+        lastSaved.value = new Date().toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        justSaved.value = true;
+        
+        setTimeout(() => {
+          justSaved.value = false;
+        }, 2000);
+        
+        // 更新原始数据，避免误报未保存更改
+        originalData.value = { ...formData.value };
+      } catch (error) {
+        console.error('自动保存失败:', error);
+        autoSaving.value = false;
+        showToast('保存失败', 'error');
+      } finally {
+        saveInProgress.value = false;
+      }
+    }
+  }, saveDelay);
+}
+
+function switchNoteType(type: 'quick' | 'article') {
+  currentNoteType.value = type;
+  nextTick(() => {
+    titleInputRef.value?.focus();
+  });
+}
+
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (hasUnsavedChanges.value) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+  const activeElement = document.activeElement;
+  const isTagInput = activeElement === tagInputRef.value;
+  const isTitleInput = activeElement === titleInputRef.value;
+  const isContentInput = activeElement === document.getElementById('content-input');
+  const isMarkdownEditor = activeElement?.closest('.markdown-editor-content');
+
+  // 保存快捷键 (Cmd/Ctrl + S)
+  if (modifierKey && e.key === 's') {
+    e.preventDefault();
+    if (isFormValid.value) {
+      handleSave();
+    }
+  }
+  
+  // 取消/关闭 (Escape)
+  if (e.key === 'Escape') {
+    if (showColorPicker.value) {
+      showColorPicker.value = false;
+    } else if (showUnsavedDialog.value) {
+      showUnsavedDialog.value = false;
+    } else if (tagFocused.value) {
+      tagInput.value = '';
+      showTagSuggestions.value = false;
+      tagFocused.value = false;
+    } else if (!loading.value) {
+      handleCancel();
+    }
+  }
+  
+  // 快速添加标签 (逗号)
+  if (e.key === ',' && document.activeElement !== tagInputRef.value) {
+    e.preventDefault();
+    tagInputRef.value?.focus();
+  }
+  
+  // 切换笔记类型 (T)
+  if ((e.altKey || e.metaKey) && e.key === 't' && props.mode === 'create') {
+    e.preventDefault();
+    switchNoteType(currentNoteType.value === 'quick' ? 'article' : 'quick');
+  }
+  
+  // 打开颜色选择器 (Cmd/Ctrl + K)
+  if (modifierKey && e.key === 'k' && formData.value.tags.length > 0) {
+    e.preventDefault();
+    showColorPicker.value = !showColorPicker.value;
+    if (showColorPicker.value) {
+      showToast('标签颜色选择器已打开，使用方向键和回车选择颜色', 'info');
+    }
+  }
+  
+  // 标签建议导航
+  if (showTagSuggestions.value && tagFocused.value) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      suggestionIndex.value = Math.min(suggestionIndex.value + 1, tagSuggestions.value.length - 1);
+      scrollToSuggestion(suggestionIndex.value + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      suggestionIndex.value = Math.max(suggestionIndex.value - 1, -1);
+      scrollToSuggestion(suggestionIndex.value - 1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (suggestionIndex.value >= 0) {
+        selectTagSuggestion(tagSuggestions.value[suggestionIndex.value]);
+      } else if (tagInput.value.trim()) {
+        addTag(tagInput.value.trim());
+        tagInput.value = '';
+      }
+    } else if (e.key === 'Escape') {
+      tagInput.value = '';
+      showTagSuggestions.value = false;
+      suggestionIndex.value = -1;
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      if (suggestionIndex.value >= 0) {
+        selectTagSuggestion(tagSuggestions.value[suggestionIndex.value]);
+      }
+    }
+  }
+  
+   // 颜色选择器导航
+  if (showColorPicker.value) {
+    handleColorPickerKeydown(e);
+  }
+   
+   // 表单字段导航
+  if (e.key === 'Tab') {
+    // 标签输入框特殊处理
+    if (isTagInput && !tagInput.value.trim()) {
+      e.preventDefault();
+      if (e.shiftKey) {
+        titleInputRef.value?.focus();
+      } else {
+        titleInputRef.value?.focus();
+      }
+      return;
+    }
+
+    // 如果在标签输入框内按 Tab，聚焦到标题输入框
+    if (isTagInput) {
+      e.preventDefault();
+      if (e.shiftKey) {
+        titleInputRef.value?.focus();
+      } else {
+        titleInputRef.value?.focus();
+      }
+      return;
+    }
+
+    // 如果在 Markdown 编辑器内，不处理
+    if (isMarkdownEditor) {
+      return;
+    }
+
+    // 标题和内容输入框之间的导航
+    if (isTitleInput || isContentInput) {
+      e.preventDefault();
+      if (e.shiftKey) {
+        // Shift+Tab 聚焦到标签输入
+        tagInputRef.value?.focus();
+      } else {
+        // Tab 聚焦到下一个（标题或内容）
+        if (isTitleInput) {
+          const nextInput = document.getElementById('content-input') || document.getElementById('content-textarea') || tagInputRef.value;
+          nextInput?.focus();
+        } else {
+          tagInputRef.value?.focus();
+        }
+      }
+      return;
+    }
+  }
+
+  // 如果在标签输入框内按 Backspace，删除最后一个标签
+  if (isTagInput && e.key === 'Backspace') {
+    if (!tagInput.value.trim() && formData.value.tags.length > 0) {
+      e.preventDefault();
+      removeTag(formData.value.tags[formData.value.tags.length - 1]);
+      return;
+    }
+  }
+
+  // 快捷键：快速添加标签（Alt + 标点 + T）
+  if ((e.altKey || e.metaKey) && e.key === 't' && props.mode === 'create') {
+    e.preventDefault();
+    switchNoteType(currentNoteType.value === 'quick' ? 'article' : 'quick');
+    showToast(`切换为 ${currentNoteType.value === 'quick' ? '文章' : '灵感小记'}模式`, 'info');
+  }
+
+  // 快捷键：重复上一个标签（Alt + 标点 + U）
+  if ((e.altKey || e.metaKey) && e.key === 'u' && props.mode === 'create') {
+    e.preventDefault();
+    duplicateLastTag();
+  }
+}
+
+function scrollToSuggestion(index: number) {
+  const suggestions = document.querySelectorAll('.suggestion-item');
+  if (suggestions[index]) {
+    suggestions[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+function handleColorPickerKeydown(e: KeyboardEvent) {
+  if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
+    e.preventDefault();
+    
+    if (e.key === 'Escape') {
+      showColorPicker.value = false;
+    } else if (e.key === 'Enter') {
+      applyColorToSelectedTags(selectedTagColor.value);
+      showColorPicker.value = false;
+      showToast('标签颜色已应用', 'success');
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      const currentIndex = tagColorPalette.indexOf(selectedTagColor.value);
+      const nextIndex = (currentIndex + 1) % tagColorPalette.length;
+      selectedTagColor.value = tagColorPalette[nextIndex];
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      const currentIndex = tagColorPalette.indexOf(selectedTagColor.value);
+      const prevIndex = (currentIndex - 1 + tagColorPalette.length) % tagColorPalette.length;
+      selectedTagColor.value = tagColorPalette[prevIndex];
+    }
+  }
+}
+
+function focusFirstInvalidField() {
+  if (titleError.value) {
+    titleInputRef.value?.focus();
+    return;
+  }
+  if (contentError.value) {
+    // For quick notes, focus the textarea
+    if (currentNoteType.value === 'quick') {
+      const textarea = document.getElementById('content-input') as HTMLTextAreaElement | null;
+      textarea?.focus();
+    }
+    // For articles, focus is handled by MarkdownEditor component internally
+  }
+}
+
+async function handleSave() {
+  titleTouched.value = true;
+  contentTouched.value = true;
+
+  if (!isFormValid.value) {
+    focusFirstInvalidField();
+    return;
+  }
+
+  if (loading.value || saveInProgress.value) {
+    return;
+  }
+
+  loading.value = true;
+  saveInProgress.value = true;
+  
+  try {
+    const savedData = {
+      title: formData.value.title,
+      content: formData.value.content,
+      tags: formData.value.tags,
+      type: currentNoteType.value,
+    };
+    
+    emit('save', savedData);
+    
+    // 模拟API调用延迟
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    lastSaved.value = new Date().toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    pendingChanges.value = false;
+    lastAutoSaveTime.value = Date.now();
+    
+    // 更新原始数据，避免误报未保存更改
+    originalData.value = { ...formData.value };
+  } catch (error) {
+    console.error('保存失败:', error);
+    showToast('保存失败', 'error');
+  } finally {
+    loading.value = false;
+    saveInProgress.value = false;
+  }
+}
+
+function handleCancel() {
+  if (hasUnsavedChanges.value && props.mode === 'edit') {
+    showUnsavedDialog.value = true;
+  } else {
+    emit('cancel');
+  }
+}
+
+function handleTagKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter' && tagInput.value.trim()) {
+    event.preventDefault();
+    addTag(tagInput.value.trim());
+    tagInput.value = '';
+    showTagSuggestions.value = false;
+  } else if (event.key === ',' && tagInput.value.trim()) {
+    event.preventDefault();
+    addTag(tagInput.value.trim());
+    tagInput.value = '';
+    showTagSuggestions.value = false;
+  } else if (event.key === 'Backspace' && !tagInput.value && formData.value.tags.length > 0) {
+    formData.value.tags.pop();
+  }
+}
+
+function handleTagInputChange() {
+  // 由 watch 处理
+}
+
+function handleContentChange() {
+  // 内容变化处理
+}
+
+function handleContentFocus() {
+  contentFocused.value = true;
+}
+
+function handleTextareaKeydown(event: KeyboardEvent) {
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    const textarea = event.target as HTMLTextAreaElement;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = formData.value.content;
+    formData.value.content = value.substring(0, start) + '  ' + value.substring(end);
+    nextTick(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + 2;
+    });
+  }
+}
+
+function handleAddTag() {
+  if (tagInput.value.trim()) {
+    addTag(tagInput.value.trim());
+  }
+}
+
+function addTag(tag: string) {
+  const result = composableAddTag(tag);
+  if (result === 'added') {
+    showToast(t('editor.tagAdded', { tag }), 'success');
+    nextTick(() => tagInputRef.value?.focus());
+  } else if (result === 'duplicate') {
+    showToast('标签已存在', 'error');
+    tagInputRef.value?.focus();
+  } else if (result === 'limit') {
+    showToast(t('editor.tagsLimitExceeded', { limit: tagsLimit }), 'error');
+    tagInputRef.value?.focus();
+  }
+}
+
+function removeTag(tag: string) {
+  if (composableRemoveTag(tag)) {
+    showToast(t('editor.tagRemoved', { tag }), 'info');
+    if (formData.value.tags.length > 0) {
+      nextTick(() => tagInputRef.value?.focus());
+    }
+  }
+}
+
+function confirmClearTags() {
+  if (formData.value.tags.length === 0) return;
+  clearAllTags();
+  showToast(t('editor.tagsCleared'), 'success');
+  tagInputRef.value?.focus();
+}
+
+function handleTagBlur() {
+  setTimeout(() => {
+    showTagSuggestions.value = false;
+    suggestionIndex.value = -1;
+  }, 150);
+}
+
+function handleTagPaste(event: ClipboardEvent) {
+  event.preventDefault();
+
+  const clipboardData = (event as any).clipboardData;
+  const clipboard = clipboardData || (window as any).clipboardData;
+  const pasteData = clipboard
+    ? clipboard.getData('text/plain')
+    : null;
+
+  if (!pasteData) return;
+
+  const pasteText = pasteData ? pasteData.getData('text/plain') || '' : '';
+  const tags = pasteText
+    .split(/[,，\n\r]+/)
+    .map((tag: string) => tag.trim())
+    .filter((tag: string) => tag && !formData.value.tags.includes(tag))
+    .slice(0, tagsLimit - formData.value.tags.length);
+
+  if (tags.length > 0) {
+    tags.forEach((tag: string) => {
+      composableAddTag(tag);
+    });
+    tagInput.value = '';
+    showToast(`已添加 ${tags.length} 个标签`, 'success');
+  }
+}
+
+function selectTagSuggestion(tag: string) {
+  addTag(tag);
+  tagInput.value = '';
+  showTagSuggestions.value = false;
+  suggestionIndex.value = -1;
+}
+
+function duplicateLastTag() {
+  if (formData.value.tags.length > 0) {
+    const lastTag = formData.value.tags[formData.value.tags.length - 1];
+    tagInput.value = lastTag;
+    tagInputRef.value?.focus();
+  }
+}
+
+function showTagColorPicker(tag: string) {
+  selectedTagForColor.value = tag;
+  selectedTagColor.value = getTagColor(tag);
+  showColorPicker.value = true;
+}
+
+function applyColorToSelectedTags(color: string) {
+  if (selectedTagForColor.value) {
+    setTagColor(selectedTagForColor.value, color);
+    selectedTagForColor.value = null;
+    showToast('标签颜色已更新', 'success');
+  } else {
+    formData.value.tags.forEach(tag => {
+      setTagColor(tag, color);
+    });
+    showToast('所有标签颜色已更新', 'success');
+  }
+}
+
+onMounted(() => {
+  setTimeout(() => {
+    titleInputRef.value?.focus();
+    mounted.value = true;
+  }, 100);
+  window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('beforeunload', handleBeforeUnload);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value);
+  }
+  document.body.style.overflow = '';
+});
+</script>
+
+<style scoped>
+/* ==================== 辅助功能类 ==================== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==================== 主容器 ==================== */
+.editor-container {
+  min-height: 100vh;
+  position: relative;
+  /* Background handled by aurora layer */
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== 顶部导航栏 ==================== */
+.editor-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 36px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-bottom: 1px solid var(--glass-border);
+  transition: all 0.3s ease;
+}
+
+.editor-header:hover {
+  background: var(--color-surface);
+  border-bottom-color: var(--glass-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.nav-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--color-text-secondary);
+}
+
+.back-button:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  transform: translateX(-2px);
+  border-color: var(--color-accent);
+}
+
+.nav-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.nav-text {
+  display: inline;
+}
+
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.page-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.page-indicator:hover {
+  background: var(--color-surface);
+  border-color: var(--glass-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.indicator-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-accent);
+}
+
+.page-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-body);
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--glass-bg);
+}
+
+.action-button:hover:not(:disabled) {
+  background: var(--color-surface);
+  transform: translateY(-1px);
+}
+
+.secondary-button:hover {
+  color: var(--color-text-primary);
+}
+
+.primary-button {
+  color: white;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%);
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.primary-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.primary-button.success:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-strong) 100%);
+}
+
+.primary-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.editor-header:hover {
+  background: var(--glass-bg);
+  border-bottom-color: var(--glass-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.nav-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--color-text-secondary);
+}
+
+.back-button:hover {
+  color: var(--color-text-primary);
+  background: rgba(0, 0, 0, 0.03);
+  transform: translateX(-2px);
+}
+
+.nav-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.nav-text {
+  display: inline;
+}
+
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.page-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.page-indicator:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--glass-border);
+}
+
+.indicator-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary);
+}
+
+.page-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.secondary-button {
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.secondary-button:hover {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  transform: translateY(-1px);
+}
+
+.primary-button {
+  color: white;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%);
+  box-shadow: 0 2px 8px transparent;
+}
+
+.primary-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px transparent;
+}
+
+.primary-button.success:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-strong) 100%);
+  box-shadow: 0 2px 8px transparent;
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-accent-strong);
+  transform: translateY(-1px);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== 主编辑区域 ==================== */
+.editor-main {
+  flex: 1;
+  padding: 32px 72px;
+  overflow: auto;
+  position: relative;
+}
+
+/* ==================== 类型切换器 ==================== */
+.type-switcher {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  backdrop-filter: blur(var(--glass-blur));
+  transition: all 0.2s ease;
+}
+
+.type-switcher:hover {
+  background: var(--color-surface);
+  border-color: var(--glass-border);
+}
+
+.type-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+.type-option:hover {
+  background: rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.type-option.active {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+.type-option-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.type-switch-enter-active,
+.type-switch-leave-active {
+  transition: all 0.2s ease;
+}
+
+.type-switch-enter-from,
+.type-switch-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* 响应式：标题区域 */
+@media (max-width: 768px) {
+  .header-center {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .type-switcher {
+    width: 100%;
+  }
+  
+  .page-indicator {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.editor-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
+/* 骨架屏加载 */
+.skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+}
+
+.skeleton-title {
+  height: 56px;
+  background: linear-gradient(90deg, var(--color-border) 0%, transparent 50%, var(--color-border) 100%);
+  background-size: 200% 100%;
+  border-radius: 14px;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-tags {
+  height: 72px;
+  background: linear-gradient(90deg, var(--color-border) 0%, transparent 50%, var(--color-border) 100%);
+  background-size: 200% 100%;
+  border-radius: 12px;
+  animation: shimmer 1.5s infinite;
+  animation-delay: 0.2s;
+}
+
+.skeleton-content {
+  flex: 1;
+  min-height: calc(100vh - 380px);
+  background: linear-gradient(90deg, var(--color-border) 0%, transparent 50%, var(--color-border) 100%);
+  background-size: 200% 100%;
+  border-radius: 14px;
+  animation: shimmer 1.5s infinite;
+  animation-delay: 0.4s;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ==================== 动画定义 ==================== */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fade-in-enter-active {
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-in-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.tag-list-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tag-list-enter-from {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.tag-list-move {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==================== 中央编辑区 ==================== */
+.editor-center-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.editor-center {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ==================== 标题区域 ==================== */
+.title-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 0 24px 0;
+  background: transparent;
+  border-bottom: 2px solid var(--glass-border);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.title-section:hover {
+  border-bottom-color: var(--glass-border);
+}
+
+.title-section.focused {
+  border-bottom-color: var(--color-accent);
+  border-bottom-width: 3px;
+}
+
+.title-section.has-error {
+  border-bottom-color: var(--color-status-danger);
+}
+
+.title-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: var(--color-accent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  transition: all 0.3s ease;
+}
+
+.title-section:hover .title-icon-wrapper {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  transform: scale(1.08);
+}
+
+.title-section.focused .title-icon-wrapper {
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+  transform: scale(1.12);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.title-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.title-input {
+  flex: 1;
+  padding: 16px 0;
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--color-text-body);
+  background: transparent;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+  letter-spacing: -0.02em;
+}
+
+.title-input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.3;
+}
+
+.title-input.is-invalid {
+  color: var(--color-status-danger);
+}
+
+.title-footer {
+  position: absolute;
+  right: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  padding: 5px 10px;
+  background: var(--glass-bg);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.title-error {
+  position: absolute;
+  bottom: -32px;
+  left: 0;
+  font-size: 12px;
+  color: var(--color-status-danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--color-status-danger) 12%, transparent);
+  border: 1px solid var(--color-status-danger);
+  border-radius: 10px;
+  animation: slideDown 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* ==================== 标签区域 - 优化样式 ==================== */
+.tags-section {
+  background: transparent;
+  border: none;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.tags-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tags-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tags-header-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-accent);
+  opacity: 0.9;
+}
+
+.tags-header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-body);
+}
+
+.tags-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tags-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 5px 12px;
+  background: var(--glass-bg);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.tags-count.near-limit {
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--glass-bg));
+  border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
+.tags-count.at-limit {
+  color: var(--color-status-danger);
+  background: color-mix(in srgb, var(--color-status-danger) 12%, var(--glass-bg));
+  border-color: color-mix(in srgb, var(--color-status-danger) 30%, transparent);
+}
+
+.tags-limit-warning-icon {
+  font-size: 13px;
+  color: var(--color-status-danger);
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.clear-tags-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clear-tags-button:hover {
+  background: color-mix(in srgb, var(--color-status-danger) 12%, transparent);
+  border-color: var(--color-status-danger);
+  color: var(--color-status-danger);
+  transform: scale(1.08) rotate(90deg);
+}
+
+.clear-icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* 标签输入容器 */
+.tags-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tags-input-wrapper {
+  position: relative;
+}
+
+.tags-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 2px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  min-height: 52px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tags-section.focused .tags-field-wrapper {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  transform: translateY(-3px);
+}
+
+.tags-section.has-error .tags-field-wrapper {
+  border-color: var(--color-status-danger);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-status-danger) 12%, transparent);
+}
+
+.tags-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 28px;
+}
+
+/* 标签胶囊样式 - 现代化 */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--glass-bg));
+  border: 1.5px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent-strong);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
+.tag-chip:hover {
+  background: color-mix(in srgb, var(--color-accent) 20%, var(--glass-bg));
+  border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.tag-chip:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.tag-chip.shake-animation {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.tags-field {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: var(--color-text-body);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.tags-field::placeholder {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+/* 添加按钮 */
+.add-tag-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  color: white;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+
+.add-tag-button:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+
+.add-tag-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+}
+
+.add-tag-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.add-icon {
+  width: 17px;
+  height: 17px;
+}
+
+/* 输入提示 */
+.tags-input-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.tags-input-hint.focused {
+  opacity: 1;
+  height: 22px;
+  margin-top: 6px;
+}
+
+.hint-text kbd {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 10px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin: 0 3px;
+}
+
+/* 标签建议 */
+.tag-suggestions {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 2px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.15);
+  z-index: 10;
+  backdrop-filter: blur(12px);
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  font-size: 13px;
+  color: var(--color-text-body);
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  transform: translateX(4px);
+}
+
+.suggestion-shortcut kbd {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+/* ==================== 内容编辑区 ==================== */
+.content-section {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-section.focused {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-radius: 14px;
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 0;
+  border-bottom: 2px solid var(--glass-border);
+}
+
+.content-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--color-accent);
+}
+
+.content-header-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.content-type {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.content-stats {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 6px 12px;
+  background: var(--glass-bg);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.content-textarea {
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 500px);
+  padding: 28px 32px;
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--color-text-body);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Consolas', monospace;
+}
+
+.content-textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.4;
+}
+
+.content-textarea:focus {
+  background: transparent;
+}
+
+.content-textarea.is-invalid {
+  color: var(--color-status-danger);
+}
+
+.content-error {
+  position: absolute;
+  bottom: 20px;
+  left: 4px;
+  font-size: 12px;
+  color: var(--color-status-danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--color-status-danger) 12%, transparent);
+  border: 1px solid var(--color-status-danger);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.markdown-editor-full {
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 500px);
+  background: var(--color-surface);
+  border: none;
+  border-radius: 0;
+}
+
+.markdown-editor-full:focus-within {
+  background: var(--color-surface);
+}
+
+/* ==================== 侧边栏样式重构（已移除） ==================== */
+
+.fade-in-enter-active {
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-in-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.tag-list-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tag-list-enter-from {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.tag-list-move {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==================== 侧边栏样式重构 ==================== */
+.editor-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: sticky;
+  top: 100px; /* Header height + spacing */
+  padding-top: 20px;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  margin: 0 0 4px 8px;
+}
+
+/* 类型选择器 - 极简列表 */
+.type-selector-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.type-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.type-card:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.type-card.active {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.type-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.03);
+  color: var(--color-text-secondary);
+}
+
+.type-card.active .type-icon-wrapper {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-accent);
+}
+
+.type-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.type-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.type-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-body);
+}
+
+.type-desc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* 统计信息 - 极简列表 */
+.note-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border-bottom: 1px dashed rgba(0,0,0,0.05);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-item:hover {
+  color: var(--color-text-primary);
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-family: 'SF Mono', monospace;
+  font-weight: 500;
+}
+
+/* ==================== 中央编辑区 ==================== */
+.editor-center-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.editor-center {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ==================== 标题区域 ==================== */
+.title-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 0 16px 0;
+  background: transparent;
+  border-bottom: 1px solid transparent; /* Cleaner default state */
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.title-section:hover {
+  border-bottom-color: var(--glass-border);
+}
+
+.title-section.focused {
+  border-bottom-color: var(--color-accent);
+}
+
+.title-section.dirty {
+  border-bottom-color: var(--glass-border);
+}
+
+.title-section.has-error {
+  border-bottom-color: var(--color-status-danger);
+}
+
+.title-section.has-error.focused {
+  border-bottom-color: var(--color-status-danger);
+}
+
+/* 移除不需要的旧样式 */
+.title-section.article,
+.title-section.quick {
+  border: none;
+  border-bottom: 2px solid var(--glass-border);
+}
+
+.title-section.article.focused {
+  border-bottom-color: var(--color-accent);
+  box-shadow: none;
+}
+
+.title-section.quick.focused {
+  border-bottom-color: var(--color-accent);
+  box-shadow: none;
+}
+
+.title-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--color-accent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.title-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.title-input {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-text-body);
+  background: transparent;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+
+.title-input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.4;
+}
+
+.title-input.is-invalid {
+  color: var(--color-status-danger);
+}
+
+.title-footer {
+  position: absolute;
+  right: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.title-error,
+.content-error {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  font-size: 11px;
+  color: var(--color-status-danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ==================== 标签区域 - 优化样式 ==================== */
+.tags-section {
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.tags-section.focused {
+  border: none;
+  box-shadow: none;
+}
+
+.tags-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.tags-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tags-header-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+  opacity: 0.8;
+}
+
+.tags-header-title {
+  display: none; /* 极简模式隐藏标题 */
+}
+
+.tags-header-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tags-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  padding: 2px 6px;
+  background: transparent;
+  border-radius: 4px;
+}
+
+.tags-count.near-limit {
+  color: var(--color-warning);
+}
+
+.tags-count.at-limit {
+  color: var(--color-status-danger);
+}
+
+.tags-limit-warning-icon {
+  font-size: 12px;
+  color: var(--color-status-danger);
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tags-header-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto; /* Push to right */
+}
+
+.clear-tags-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clear-tags-button:hover {
+  opacity: 1;
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-status-danger);
+  transform: scale(1.05);
+}
+
+.clear-icon {
+  width: 10px;
+  height: 10px;
+}
+
+/* 标签输入容器 */
+.tags-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tags-input-wrapper {
+  position: relative;
+}
+
+.tags-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1.5px solid var(--color-border-subtle);
+  border-radius: 10px;
+  padding: 8px 10px;
+  min-height: 42px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tags-section.focused .tags-field-wrapper {
+  border-color: var(--color-accent);
+  background: transparent;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.tags-section.has-error .tags-field-wrapper {
+  border-color: var(--color-status-danger);
+}
+
+.tags-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 26px;
+}
+
+/* 标签胶囊样式 - 现代化 */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--glass-bg));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--color-accent-strong);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
+.tag-chip:hover {
+  background: color-mix(in srgb, var(--color-accent) 15%, var(--glass-bg));
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px transparent;
+}
+
+.tag-chip.shake-animation {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.tags-field {
+  flex: 1;
+  min-width: 100px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--color-text-body);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.tags-field::placeholder {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* 添加按钮 */
+.add-tag-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  color: white;
+  box-shadow: 0 2px 4px transparent;
+}
+
+.add-tag-button:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 8px transparent;
+}
+
+.add-tag-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.add-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 输入提示 */
+.tags-input-hint {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.tags-input-hint.focused {
+  opacity: 1;
+  height: 20px;
+  margin-top: 4px;
+}
+
+.hint-text kbd {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 10px;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: 0 2px;
+}
+
+/* 标签建议 */
+.tag-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  font-size: 12px;
+  color: var(--color-text-body);
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.suggestion-shortcut kbd {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+/* 颜色选择器 */
+.tags-color-picker {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.color-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.color-picker-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.color-picker-button:hover {
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+.color-picker-button.selected {
+  border-color: var(--color-text-body);
+  transform: scale(1.1);
+}
+
+/* Responsive adjustments for tags */
+@media (max-width: 768px) {
+  .tags-header {
+    gap: 8px;
+  }
+  
+  .tags-field-wrapper {
+    padding: 6px 8px;
+    min-height: 38px;
+  }
+  
+  .tag-chip {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  
+  .color-picker-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ==================== 内容编辑区 ==================== */
+.content-section {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-section.focused {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 0 3px transparent;
+}
+
+/* 文章类型内容区域 */
+.content-section.article {
+  border-left: 4px solid #3b82f6;
+}
+
+.content-section.article .content-header {
+  border-bottom-color: transparent;
+}
+
+.content-section.article .content-icon {
+  color: #3b82f6;
+}
+
+/* 灵感小记类型内容区域 */
+.content-section.quick {
+  border-left: 4px solid var(--color-accent);
+}
+
+.content-section.quick .content-header {
+  border-bottom-color: transparent;
+}
+
+.content-section.quick .content-icon {
+  color: var(--color-accent-strong);
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.content-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+}
+
+.content-header-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.content-type {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.content-stats {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.content-textarea {
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 480px);
+  padding: 20px 24px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--color-text-body);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Consolas', monospace;
+}
+
+.content-textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.content-textarea:focus {
+  background: var(--color-surface);
+}
+
+.content-textarea.is-invalid {
+  color: var(--color-status-danger);
+}
+
+.content-error {
+  position: absolute;
+  bottom: 16px;
+  left: 4px;
+  font-size: 11px;
+  color: var(--color-status-danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.markdown-editor-full {
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 480px);
+  background: var(--color-surface);
+  border: none;
+  border-radius: 0;
+}
+
+.markdown-editor-full:focus-within {
+  background: var(--color-surface);
+}
+
+/* 标签列表动画 */
+.tag-list-enter-active {
+  transition: all 0.2s ease;
+}
+
+.tag-list-leave-active {
+  transition: all 0.2s ease;
+}
+
+.tag-list-enter-from,
+.tag-list-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* 淡入淡出动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+/* Tablet layout */
+@media (max-width: 1200px) {
+  .editor-main {
+    padding: 24px 48px;
+  }
+  
+  .editor-card {
+    padding: 56px 64px;
+  }
+  
+  .title-input {
+    font-size: 38px;
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 900px) {
+  .editor-main {
+    padding: 20px 24px;
+  }
+  
+  .type-option {
+    padding: 7px 10px;
+  }
+  
+  .type-option-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .editor-card {
+    padding: 32px 24px;
+  }
+  
+  .title-input {
+    font-size: 32px;
+  }
+  
+  .title-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .title-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .title-footer {
+    right: 16px;
+  }
+  
+  .tags-field-wrapper {
+    padding: 10px 12px;
+    min-height: 48px;
+  }
+  
+  .tags-display {
+    gap: 8px;
+  }
+  
+  .tag-chip {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .add-tag-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .add-icon {
+    width: 15px;
+    height: 15px;
+  }
+  
+  .clear-tags-button {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .clear-icon {
+    width: 13px;
+    height: 13px;
+  }
+  
+  .content-textarea {
+    padding: 20px 24px;
+    font-size: 15px;
+  }
+  
+  .content-header {
+    padding: 14px 0;
+  }
+  
+  .content-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .content-error {
+    bottom: 16px;
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+  
+  .title-error {
+    bottom: -28px;
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+  
+  .char-count {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+  
+  .editor-card {
+    padding: 40px 48px;
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 900px) {
+  .editor-main {
+    padding: 16px;
+  }
+  
+  .type-option {
+    padding: 6px 10px;
+  }
+  
+  .type-option-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .editor-card {
+    padding: 24px;
+  }
+  
+  .type-option {
+    padding: 7px 10px;
+  }
+  
+  .type-option-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .editor-card {
+    padding: 32px 24px;
+  }
+  
+  .title-input {
+    font-size: 32px;
+  }
+  
+  .title-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .title-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .title-footer {
+    right: 16px;
+  }
+  
+  .tags-field-wrapper {
+    padding: 10px 12px;
+    min-height: 48px;
+  }
+  
+  .tags-display {
+    gap: 8px;
+  }
+  
+  .tag-chip {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .add-tag-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .add-icon {
+    width: 15px;
+    height: 15px;
+  }
+  
+  .clear-tags-button {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .clear-icon {
+    width: 13px;
+    height: 13px;
+  }
+  
+  .content-textarea {
+    padding: 20px 24px;
+    font-size: 15px;
+  }
+  
+  .content-header {
+    padding: 14px 0;
+  }
+  
+  .content-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .content-error {
+    bottom: 16px;
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+  
+  .title-error {
+    bottom: -28px;
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+  
+  .char-count {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* ==================== 动画与交互 ==================== */
+</style>
