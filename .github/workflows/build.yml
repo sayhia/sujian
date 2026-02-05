@@ -90,7 +90,7 @@ jobs:
         fi
         
         echo "Building for $PLATFORM"
-        wails3 build -clean -platform $PLATFORM -upx
+        wails3 build --clean --platform $PLATFORM --upx
 
     - name: Create archives (Linux/macOS)
       if: matrix.os != 'windows-latest'
