@@ -590,7 +590,7 @@
 <script setup lang="ts">
  import { ref, computed, watch, onUnmounted, onMounted, nextTick } from 'vue';
  import { useSettingsStore } from '../stores/settingsStore';
- import { marked, Slugger } from 'marked';
+ import { marked } from 'marked';
  import hljs from 'highlight.js/lib/common';
  import { Bold, Italic, Strikethrough, Heading, Underline, Highlighter, IndentIncrease, IndentDecrease, AlignLeft, AlignCenter, AlignRight, AlignJustify, Paintbrush, MessageSquare, PlusSquare, Columns3, List, ListChecks, ListOrdered, ListTree, Quote, Code, FileCode, Link, FileText, Type, Clock, Image as ImageIcon, Table, Minus, Eye, EyeOff, Edit3, Keyboard, X, MoreHorizontal, ChevronDown, ChevronRight, Palette, PaintBucket } from 'lucide-vue-next';
 
@@ -598,6 +598,18 @@
    breaks: true,
    gfm: true
  });
+
+ // Simple slug function to replace Slugger
+ function slug(text: string): string {
+   return text
+     .toString()
+     .toLowerCase()
+     .replace(/\s+/g, '-') // Replace spaces with -
+     .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+     .replace(/\-\-+/g, '-') // Replace multiple - with single -
+     .replace(/^-+/, '') // Trim - from start of text
+     .replace(/-+$/, ''); // Trim - from end of text
+ }
 
  const props = withDefaults(defineProps<{
    modelValue: string;
@@ -659,17 +671,17 @@
  ];
  const shortcutBindings = ref<Record<string, string>>({});
  const hiddenItems = ref(new Set<string>());
-const collapsedGroups = ref(new Set<string>());
- const shortcutBindings = ref<Record<string, string>>({
-  list: 'Ctrl+Shift+L',
-  task: 'Ctrl+Shift+T',
-  table: 'Ctrl+Shift+M',
-  toc: 'Ctrl+Shift+O',
-  formatPainter: 'Ctrl+Shift+F',
-  indent: 'Ctrl+]',
-  outdent: 'Ctrl+[',
-  details: 'Ctrl+Shift+D'
- });
+ const collapsedGroups = ref(new Set<string>());
+ shortcutBindings.value = {
+   list: 'Ctrl+Shift+L',
+   task: 'Ctrl+Shift+T',
+   table: 'Ctrl+Shift+M',
+   toc: 'Ctrl+Shift+O',
+   formatPainter: 'Ctrl+Shift+F',
+   indent: 'Ctrl+]',
+   outdent: 'Ctrl+[',
+   details: 'Ctrl+Shift+D'
+ };
 const toolbarStyle = computed(() => settingsStore.settings.toolbarStyle);
 const toolbarPosition = computed(() => settingsStore.settings.toolbarPosition);
 const toolbarAutohide = computed(() => settingsStore.settings.toolbarAutohide);
@@ -775,7 +787,7 @@ const toolbarAppearanceVars = computed<Record<string, string>>(() => {
 
    try {
      const tokens = marked.lexer(content.value);
-      const tocSlugger = new Slugger();
+      const tocSlugger = { slug };
      const toc = tokens
        .filter((token) => token.type === 'heading')
        .map((token) => {
@@ -787,7 +799,7 @@ const toolbarAppearanceVars = computed<Record<string, string>>(() => {
          };
        });
 
-      const renderSlugger = new Slugger();
+      const renderSlugger = { slug };
      const renderer = new marked.Renderer();
      renderer.heading = (text: unknown, level?: number) => {
        if (text && typeof text === 'object') {
@@ -1735,9 +1747,13 @@ function getShortcutAction(event: KeyboardEvent) {
 }
 
 function runShortcutAction(action: string) {
-  const item = toolbarItems.value.find(item => item.action === action);
-  if (item) {
-    handleToolbarAction(item);
+  // Find item in toolbar groups by action
+  for (const group of toolbarGroups.value) {
+    const item = group.items.find(item => item.action === action);
+    if (item) {
+      handleToolbarAction(item);
+      return;
+    }
   }
 }
 
