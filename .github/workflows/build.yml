@@ -92,7 +92,7 @@ jobs:
         export CGO_ENABLED=1
         echo "Building for Linux/amd64"
         mkdir -p build/bin
-        go build -ldflags="-s -w" -o build/bin/panda-time-note main.go
+        go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o build/bin/panda-time-note main.go
         if command -v upx &> /dev/null; then
           upx --best build/bin/panda-time-note
         fi
@@ -103,6 +103,7 @@ jobs:
         export GOOS=darwin
         export GOARCH=${{ matrix.arch }}
         export CGO_ENABLED=1
+        export MACOSX_DEPLOYMENT_TARGET=10.15
         echo "Building for macOS/${{ matrix.arch }}"
         mkdir -p build/bin
         
@@ -111,7 +112,7 @@ jobs:
           APP_NAME="panda-time-note-arm64"
         fi
         
-        go build -ldflags="-s -w" -o "build/bin/${APP_NAME}" main.go
+        go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o "build/bin/${APP_NAME}" main.go
         
         APP_DIR="build/bin/${APP_NAME}.app"
         mkdir -p "$APP_DIR/Contents/MacOS"
@@ -149,9 +150,10 @@ jobs:
           mv "build/bin/panda-time-note" "$APP_DIR/Contents/MacOS/"
         fi
         
-        if command -v upx &> /dev/null; then
-          upx --best "$APP_DIR/Contents/MacOS/panda-time-note"
-        fi
+        # Skip UPX compression for macOS as it's not supported
+        # if command -v upx &> /dev/null; then
+        #   upx --best --force-macos "$APP_DIR/Contents/MacOS/panda-time-note"
+        # fi
 
     - name: Build Go application (Windows)
       if: matrix.os == 'windows-latest'
@@ -162,7 +164,7 @@ jobs:
         $env:CGO_ENABLED = "1"
         echo "Building for Windows/amd64"
         New-Item -ItemType Directory -Force -Path build/bin
-        go build -ldflags="-s -w" -o build/bin/panda-time-note.exe main.go
+        go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o build/bin/panda-time-note.exe main.go
         if (Get-Command upx -ErrorAction SilentlyContinue) {
           upx --best build/bin/panda-time-note.exe
         }
