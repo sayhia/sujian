@@ -590,7 +590,7 @@
 <script setup lang="ts">
  import { ref, computed, watch, onUnmounted, onMounted, nextTick } from 'vue';
  import { useSettingsStore } from '../stores/settingsStore';
- import { marked } from 'marked';
+ import { marked, Slugger } from 'marked';
  import hljs from 'highlight.js/lib/common';
  import { Bold, Italic, Strikethrough, Heading, Underline, Highlighter, IndentIncrease, IndentDecrease, AlignLeft, AlignCenter, AlignRight, AlignJustify, Paintbrush, MessageSquare, PlusSquare, Columns3, List, ListChecks, ListOrdered, ListTree, Quote, Code, FileCode, Link, FileText, Type, Clock, Image as ImageIcon, Table, Minus, Eye, EyeOff, Edit3, Keyboard, X, MoreHorizontal, ChevronDown, ChevronRight, Palette, PaintBucket } from 'lucide-vue-next';
 
@@ -644,20 +644,21 @@
  const menuAnnounce = ref('');
 
  const colorPalette = [
-  '#111827',
-  '#4b5563',
-  '#9ca3af',
-  '#ef4444',
-  '#f97316',
-  '#f59e0b',
-  '#10b981',
-  '#0ea5e9',
-  '#6366f1',
-  '#a855f7',
-  '#ec4899',
-  '#14b8a6'
+   '#111827',
+   '#4b5563',
+   '#9ca3af',
+   '#ef4444',
+   '#f97316',
+   '#f59e0b',
+   '#10b981',
+   '#0ea5e9',
+   '#6366f1',
+   '#a855f7',
+   '#ec4899',
+   '#14b8a6'
  ];
-const hiddenItems = ref(new Set<string>());
+ const shortcutBindings = ref<Record<string, string>>({});
+ const hiddenItems = ref(new Set<string>());
 const collapsedGroups = ref(new Set<string>());
  const shortcutBindings = ref<Record<string, string>>({
   list: 'Ctrl+Shift+L',
@@ -774,7 +775,7 @@ const toolbarAppearanceVars = computed<Record<string, string>>(() => {
 
    try {
      const tokens = marked.lexer(content.value);
-     const tocSlugger = new marked.Slugger();
+      const tocSlugger = new Slugger();
      const toc = tokens
        .filter((token) => token.type === 'heading')
        .map((token) => {
@@ -786,7 +787,7 @@ const toolbarAppearanceVars = computed<Record<string, string>>(() => {
          };
        });
 
-     const renderSlugger = new marked.Slugger();
+      const renderSlugger = new Slugger();
      const renderer = new marked.Renderer();
      renderer.heading = (text: unknown, level?: number) => {
        if (text && typeof text === 'object') {
@@ -1696,6 +1697,47 @@ function loadToolbarOrder() {
   } catch (error) {
     console.warn('[MarkdownEditor] Failed to load toolbar order', error);
     resetToolbarOrderToDefault();
+  }
+}
+
+function loadShortcutBindings() {
+  const raw = localStorage.getItem('markdown-shortcuts');
+  if (raw) {
+    try {
+      shortcutBindings.value = JSON.parse(raw);
+    } catch (error) {
+      console.warn('[MarkdownEditor] Failed to load shortcuts', error);
+      shortcutBindings.value = {};
+    }
+  }
+}
+
+function updateShortcut(action: string, keyBinding: string) {
+  shortcutBindings.value[action] = keyBinding;
+  localStorage.setItem('markdown-shortcuts', JSON.stringify(shortcutBindings.value));
+}
+
+function getShortcutAction(event: KeyboardEvent) {
+  const keyCombo = [
+    event.ctrlKey ? 'Ctrl' : '',
+    event.altKey ? 'Alt' : '',
+    event.shiftKey ? 'Shift' : '',
+    event.metaKey ? 'Meta' : '',
+    event.key
+  ].filter(Boolean).join('+');
+
+  for (const [action, binding] of Object.entries(shortcutBindings.value)) {
+    if (binding === keyCombo) {
+      return action;
+    }
+  }
+  return null;
+}
+
+function runShortcutAction(action: string) {
+  const item = toolbarItems.value.find(item => item.action === action);
+  if (item) {
+    handleToolbarAction(item);
   }
 }
 
