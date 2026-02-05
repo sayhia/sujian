@@ -96,8 +96,13 @@ jobs:
         # Clean previous builds
         rm -rf build/
         
-        # Build with verbose output
-        wails3 build -v
+        # Show Wails help to understand available options
+        echo "Wails build help:"
+        wails3 build --help 2>&1 || echo "Help command failed"
+        
+        # Build without unsupported flags
+        echo "Starting Wails build..."
+        wails3 build
         
         # Check what was created
         echo "Build directory contents:"
