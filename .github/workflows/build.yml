@@ -99,9 +99,20 @@ jobs:
         # Clean previous builds
         rm -rf build/
         
-        # Use Task to build (which is what Wails projects expect)
+        # Set the target OS for Task
+        if [ "${{ matrix.os }}" = "darwin-latest" ]; then
+          export OS=darwin
+        elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+          export OS=windows
+        else
+          export OS=linux
+        fi
+        
+        echo "Building for OS=$OS"
+        
+        # Use Task to build for specific platform
         echo "Starting build with Task..."
-        task build
+        task $OS:build
         
         # Check what was created
         echo "Build directory contents:"
