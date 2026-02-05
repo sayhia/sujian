@@ -309,12 +309,10 @@ async function onDeleteNote(id: number) {
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  border-radius: 16px;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -327,12 +325,7 @@ async function onDeleteNote(id: number) {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--color-accent) 18%, transparent),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent);
   transition: left 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -341,12 +334,9 @@ async function onDeleteNote(id: number) {
 }
 
 .header-content:hover {
-  box-shadow: var(
-    --state-accent-soft-shadow,
-    0 6px 20px color-mix(in srgb, var(--text-primary) 6%, transparent)
-  );
-  transform: translateY(-2px);
-  border-color: var(--state-accent-soft-border, color-mix(in srgb, var(--color-accent) 24%, transparent));
+  box-shadow: var(--shadow-md), var(--shadow-inset-soft);
+  transform: none;
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
 .header-title {
@@ -425,15 +415,15 @@ async function onDeleteNote(id: number) {
 }
 
 .view-toggle-btn:hover {
-  background: color-mix(in srgb, var(--color-surface) 90%, var(--glass-bg));
-  transform: scale(1.05);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  transform: none;
   color: var(--color-text-body);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
 .view-toggle-btn:active {
-  transform: scale(0.95);
-  background: color-mix(in srgb, var(--color-surface) 95%, var(--glass-bg));
+  transform: none;
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
 }
 
 .view-toggle-btn.active {
@@ -561,8 +551,8 @@ async function onDeleteNote(id: number) {
 /* Grid View Mode */
 .notes-list.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   padding-right: 12px;
   padding-bottom: 30px;
 }
@@ -598,11 +588,9 @@ async function onDeleteNote(id: number) {
   gap: 8px;
   padding: 8px 16px;
   border-radius: 999px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  box-shadow: var(--glass-shadow);
-  border: 1px solid var(--glass-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
+  border: 1px solid var(--color-border-subtle);
   font-size: 12px;
   font-weight: 500;
   color: var(--color-text-muted);
@@ -627,9 +615,10 @@ async function onDeleteNote(id: number) {
 }
 
 .load-more-icon {
-  width: 16px;
-  height: 16px;
-  animation: spin 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  width: 14px;
+  height: 14px;
+  animation: none;
+  opacity: 0.6;
   color: var(--color-accent-strong);
   filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--color-accent-strong) 30%, transparent));
 }
@@ -656,38 +645,28 @@ async function onDeleteNote(id: number) {
 /* Timeline Node */
 .timeline-node {
   position: absolute;
-  left: 34px;
+  left: 38px;
   top: 30px;
   z-index: 10;
 }
 
 .node-dot {
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--color-accent),
-    var(--color-accent-strong)
-  );
-  box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--color-accent) 35%, var(--color-surface)),
-    0 2px 8px color-mix(in srgb, var(--color-accent-strong) 35%, transparent),
-    0 0 12px color-mix(in srgb, var(--color-accent) 40%, transparent);
+  background: var(--color-accent-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
   position: relative;
   z-index: 2;
   animation: dotAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-  will-change: transform, box-shadow;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+  transition: none;
   cursor: pointer;
 }
 
 .note-item:hover .node-dot {
-  transform: scale(1.08);
-  box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--color-accent) 38%, var(--color-warning-light)),
-    0 2px 8px color-mix(in srgb, var(--color-accent-strong) 40%, transparent),
-    0 0 16px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  transform: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
 }
 
 @keyframes dotAppear {
@@ -701,35 +680,26 @@ async function onDeleteNote(id: number) {
   }
 }
 
- .node-ring {
+.node-ring {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 2px solid color-mix(
-      in srgb,
-      var(--color-accent) 25%,
-      transparent
-    );
-  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  will-change: transform, opacity;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 18%, transparent);
+  animation: none;
+  will-change: auto;
   pointer-events: none;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: none;
 }
 
 .note-item:hover .node-ring {
-  width: 36px;
-  height: 36px;
-  border-width: 2.2px;
-  border-color: color-mix(
-    in srgb,
-    var(--color-accent) 28%,
-    transparent
-  );
-  animation-duration: 2.4s;
+  width: 22px;
+  height: 22px;
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
 }
 
 @keyframes pulse {
@@ -942,10 +912,11 @@ async function onDeleteNote(id: number) {
 }
 
 .loading-spinner {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   color: var(--color-accent);
-  animation: spin 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: none;
+  opacity: 0.6;
   will-change: transform;
 }
 
@@ -974,14 +945,12 @@ async function onDeleteNote(id: number) {
 
 /* Empty State */
 .empty-state {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  background: var(--color-surface);
   border-radius: var(--radius-3xl, 28px);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--color-border-subtle);
   padding: 96px 48px;
   text-align: center;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--shadow-md), var(--shadow-inset-soft);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   position: relative;
@@ -1026,9 +995,58 @@ async function onDeleteNote(id: number) {
     0 16px 48px color-mix(in srgb, var(--text-primary) 10%, transparent),
     0 4px 12px color-mix(in srgb, var(--color-accent) 8%, transparent)
   );
-  transform: translateY(-6px) scale(1.01);
+  transform: none;
   border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
   background: color-mix(in srgb, var(--color-surface) 99%, #ffffff);
+}
+
+/* Business-calm overrides */
+.header-content:hover,
+.view-toggle-btn:hover,
+.view-toggle-btn:active,
+.note-item:hover .node-dot,
+.note-item:hover .node-ring,
+.empty-state:hover,
+.empty-state:hover .empty-bg,
+.empty-state:hover .empty-icon {
+  transform: none;
+}
+
+/* Business-calm animation overrides */
+.node-ring,
+.node-dot,
+.empty-bg,
+.empty-icon {
+  animation: none;
+}
+
+/* Business-calm motion clamp */
+.timeline-header,
+.timeline-line,
+.empty-illustration,
+.empty-title,
+.empty-text,
+.load-more-icon,
+.skeleton-note,
+.skeleton-dot,
+.skeleton-date-badge,
+.skeleton-title,
+.skeleton-text {
+  animation: none;
+}
+
+.header-content,
+.view-toggle-btn,
+.empty-state,
+.empty-bg,
+.empty-icon,
+.empty-illustration {
+  transition: none;
+}
+
+.empty-state:hover .empty-bg,
+.empty-state:hover .empty-icon {
+  transform: none;
 }
 
 .empty-illustration {
@@ -1189,41 +1207,214 @@ async function onDeleteNote(id: number) {
 
 /* List Transitions */
 .list-enter-active {
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: none;
 }
 
 .list-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
+  transition: none;
   position: absolute;
   width: 100%;
 }
 
 .list-enter-from {
-  opacity: 0;
-  transform: translateX(-32px) scale(0.96);
+  opacity: 1;
+  transform: none;
 }
 
 .list-leave-to {
-  opacity: 0;
-  transform: translateX(32px) scale(0.96);
+  opacity: 1;
+  transform: none;
 }
 
 .list-move {
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: none;
 }
 
 /* Fade Transition */
 .fade-enter-active {
-  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: none;
 }
 
 .fade-leave-active {
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 1, 1);
+  transition: none;
 }
 
 .fade-enter-from,
 .fade-leave-to {
-  opacity: 0;
+  opacity: 1;
+}
+
+/* ==================== Timeline Redesign (High-End) ==================== */
+.timeline-header {
+  margin-bottom: 20px;
+  padding-bottom: 0;
+}
+
+.header-content {
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, var(--color-border-subtle));
+  background: var(--color-surface);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.header-content::before {
+  display: none;
+}
+
+.header-content:hover {
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--text-primary) 6%, transparent);
+  border-color: color-mix(in srgb, var(--text-primary) 10%, var(--color-border-subtle));
+  transform: none;
+}
+
+.header-title {
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.note-count {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--text-primary) 2%, var(--color-surface));
+}
+
+.view-toggle-group {
+  background: color-mix(in srgb, var(--text-primary) 2%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.view-toggle-btn {
+  color: var(--color-text-muted);
+}
+
+.view-toggle-btn.active {
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  color: var(--color-text-body);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.timeline-line {
+  left: 28px;
+  top: 66px;
+  bottom: 48px;
+  width: 1px;
+  background: color-mix(in srgb, var(--text-primary) 14%, transparent);
+  border-radius: 1px;
+  box-shadow: none;
+}
+
+.timeline-node {
+  left: 28px;
+  top: 28px;
+}
+
+.node-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--color-accent-strong);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.node-ring {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  animation: none;
+  box-shadow: none;
+}
+
+.note-card-wrapper {
+  padding-left: 56px;
+}
+
+.note-card-wrapper::before {
+  display: none;
+}
+
+/* Skeleton alignment */
+.skeleton-timeline-node {
+  left: 28px;
+  top: 32px;
+}
+
+.skeleton-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.skeleton-card {
+  padding-left: 56px;
+}
+
+@media (max-width: 768px) {
+  .timeline-line {
+    left: 24px;
+    top: 62px;
+  }
+
+  .timeline-node {
+    left: 24px;
+  }
+
+  .node-dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .node-ring {
+    width: 20px;
+    height: 20px;
+  }
+
+  .note-card-wrapper {
+    padding-left: 50px;
+  }
+
+  .skeleton-timeline-node {
+    left: 24px;
+  }
+
+  .skeleton-card {
+    padding-left: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline-line {
+    left: 20px;
+    top: 58px;
+  }
+
+  .timeline-node {
+    left: 20px;
+  }
+
+  .node-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .node-ring {
+    width: 18px;
+    height: 18px;
+  }
+
+  .note-card-wrapper {
+    padding-left: 44px;
+  }
+
+  .skeleton-timeline-node {
+    left: 20px;
+  }
+
+  .skeleton-card {
+    padding-left: 44px;
+  }
 }
 
  /* Responsive */
@@ -1260,26 +1451,26 @@ async function onDeleteNote(id: number) {
   
   .timeline-line {
     left: 24px;
-    top: 70px;
+    top: 62px;
   }
   
   .timeline-node {
-    left: 14px;
-    top: 32px;
+    left: 24px;
+    top: 28px;
   }
   
   .node-dot {
-    width: 18px;
-    height: 18px;
+    width: 9px;
+    height: 9px;
   }
   
   .node-ring {
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
   }
   
   .note-card-wrapper {
-    padding-left: 60px;
+    padding-left: 50px;
   }
   
   .empty-state {
@@ -1463,6 +1654,81 @@ async function onDeleteNote(id: number) {
   
   .skeleton-text {
     height: 12px;
+  }
+}
+
+/* High-end overrides (final, after base responsive rules) */
+.timeline-container {
+  --timeline-line-x: 36px;
+  --timeline-line-width: 2px;
+  --timeline-dot-size: 12px;
+  --timeline-card-offset: 72px;
+}
+
+.timeline-container .timeline-line {
+  left: var(--timeline-line-x);
+  top: 74px;
+  width: var(--timeline-line-width);
+}
+
+.timeline-container .timeline-node,
+.timeline-container .skeleton-timeline-node {
+  left: calc(var(--timeline-line-x) - (var(--timeline-dot-size) / 2) + (var(--timeline-line-width) / 2));
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.timeline-container .node-dot,
+.timeline-container .skeleton-dot {
+  width: var(--timeline-dot-size);
+  height: var(--timeline-dot-size);
+}
+
+/* Ensure hover does not break centering */
+.note-item:hover .node-ring {
+  transform: translate(-50%, -50%);
+}
+
+.note-item:hover .node-dot {
+  transform: none;
+}
+
+.timeline-container .note-card-wrapper,
+.timeline-container .skeleton-card {
+  padding-left: var(--timeline-card-offset);
+}
+
+.notes-list.grid .note-card-wrapper {
+  padding-left: 0;
+}
+
+@media (max-width: 768px) {
+  .timeline-container {
+    --timeline-line-x: 28px;
+    --timeline-line-width: 2px;
+    --timeline-dot-size: 11px;
+    --timeline-card-offset: 58px;
+  }
+
+  .timeline-container .timeline-line {
+    left: var(--timeline-line-x);
+    top: 66px;
+    width: var(--timeline-line-width);
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline-container {
+    --timeline-line-x: 22px;
+    --timeline-line-width: 2px;
+    --timeline-dot-size: 10px;
+    --timeline-card-offset: 50px;
+  }
+
+  .timeline-container .timeline-line {
+    left: var(--timeline-line-x);
+    top: 60px;
+    width: var(--timeline-line-width);
   }
 }
 </style>

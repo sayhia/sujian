@@ -63,8 +63,14 @@
           >
             <MenuItems class="menu-items">
               <MenuItem v-slot="{ active }">
-                <button class="menu-item" :class="{ active }" @click="onEdit">
+                <button class="menu-item" :class="{ active }" @click="onEdit" aria-label="编辑笔记">
                   <Edit3 class="item-icon" aria-hidden="true" />
+                </button>
+              </MenuItem>
+              <MenuItem v-slot="{ active }">
+                <button class="menu-item" :class="{ active }" @click="onArchive" :aria-label="note.is_archived ? '取消归档' : '归档笔记'">
+                  <ArchiveRestore v-if="note.is_archived" class="item-icon" aria-hidden="true" />
+                  <Archive v-else class="item-icon" aria-hidden="true" />
                 </button>
               </MenuItem>
               <div class="menu-divider" />
@@ -171,6 +177,7 @@ import {
 } from '@headlessui/vue';
 import {
   Pencil,
+  Edit3,
   Archive,
   ArchiveRestore,
   Trash2,
@@ -278,12 +285,10 @@ function onDelete() {
 
  .note-capsule {
   position: relative;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--color-surface);
   border-radius: var(--radius-2xl);
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-md), var(--shadow-inset-soft);
   padding: 24px;
   cursor: pointer;
   transition: all 0.35s var(--ease-spring);
@@ -304,11 +309,7 @@ function onDelete() {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 0.3) 0%,
-    transparent 60%
-  );
+  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-accent) 8%, transparent) 0%, transparent 60%);
   pointer-events: none;
   transition: opacity 0.5s ease;
   opacity: 0;
@@ -322,9 +323,8 @@ function onDelete() {
   inset: 0;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.1) 100%
+    color-mix(in srgb, var(--color-surface) 92%, transparent) 0%,
+    transparent 60%
   );
   pointer-events: none;
   z-index: 0;
@@ -337,19 +337,17 @@ function onDelete() {
 
  /* Hover state - enhanced glassmorphism */
 .note-capsule:hover {
-  transform: translateY(-4px) scale(1.005);
-  background: color-mix(in srgb, var(--glass-bg) 95%, var(--color-surface));
-  border-color: color-mix(in srgb, var(--text-primary) 12%, transparent);
-  box-shadow: 
-    var(--shadow-xl), 
-    0 12px 32px -8px color-mix(in srgb, var(--color-accent) 8%, transparent);
+  transform: none;
+  background: color-mix(in srgb, var(--color-accent) 4%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
+  box-shadow: var(--shadow-lg), var(--shadow-inset-soft);
 }
 
 /* Active state */
 .note-capsule:active {
-  transform: translateY(-1px) scale(0.995);
-  background: color-mix(in srgb, var(--glass-bg) 98%, var(--color-surface));
-  box-shadow: var(--shadow-sm);
+  transform: none;
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
   transition: all 0.1s var(--ease-out-expo);
 }
 
@@ -369,16 +367,10 @@ function onDelete() {
   width: 72px;
   text-align: center;
   padding: 14px 10px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-palette-3) 25%, var(--glass-bg)) 0%,
-    color-mix(in srgb, var(--color-palette-4) 35%, var(--glass-bg)) 100%
-  );
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
   border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--color-palette-3) 30%, transparent);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
   transition: transform 0.35s var(--ease-spring),
               box-shadow 0.35s var(--ease-spring),
               background 0.35s var(--ease-spring),
@@ -423,25 +415,18 @@ function onDelete() {
 }
 
 .note-capsule:hover .date-badge::before {
-  opacity: 1;
+  opacity: 0;
 }
 
 .note-capsule:hover .date-badge::after {
-  opacity: 0.8;
+  opacity: 0;
 }
 
- .note-capsule:hover .date-badge {
-  transform: scale(1.03) rotate(-0.5deg);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-palette-3) 45%, var(--color-palette-5)) 0%,
-    color-mix(in srgb, var(--color-palette-4) 60%, var(--color-palette-5)) 100%
-  );
-  border-color: color-mix(in srgb, var(--color-palette-3) 45%, transparent);
-  box-shadow:
-    0 5px 18px color-mix(in srgb, var(--color-palette-3) 35%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--color-palette-3) 40%, transparent) inset,
-    inset 0 1px 2px rgba(255, 255, 255, 0.55);
+.note-capsule:hover .date-badge {
+  transform: none;
+  background: color-mix(in srgb, var(--text-primary) 8%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--text-primary) 14%, transparent);
+  box-shadow: none;
 }
 
 /* 性能优化：减少动画属性，使用 transform 和 opacity 为主 */
@@ -1499,7 +1484,7 @@ function onDelete() {
 }
 
 .note-capsule:hover .note-type-badge-corner.variant-mini-badge {
-  transform: scale(1.12) rotate(5deg);
+  transform: scale(1.04);
 }
 
 .note-type-badge-corner.variant-mini-badge .type-badge-icon {
@@ -1525,7 +1510,7 @@ function onDelete() {
 
 .note-type-badge-corner.variant-dot-icon.article-type {
   background: var(--type-article-border);
-  border: 2px solid var(--type-article-border-hover);
+  border: 1px solid var(--type-article-border-hover);
 }
 
 .note-type-badge-corner.variant-dot-icon.quick-type {
@@ -1534,7 +1519,7 @@ function onDelete() {
     var(--color-accent) 18%,
     transparent
   );
-  border: 2px solid color-mix(
+  border: 1px solid color-mix(
     in srgb,
     var(--color-accent) 34%,
     transparent
@@ -1542,7 +1527,7 @@ function onDelete() {
 }
 
 .note-capsule:hover .note-type-badge-corner.variant-dot-icon {
-  transform: scale(1.2);
+  transform: scale(1.02);
 }
 
 .note-type-badge-corner.variant-dot-icon .type-badge-icon {
@@ -1569,50 +1554,29 @@ function onDelete() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-surface) 70%, transparent),
-    color-mix(in srgb, var(--color-surface) 90%, transparent)
-  );
+  background: var(--color-surface);
   border: 1px solid color-mix(in srgb, var(--color-border-subtle));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   opacity: 0;
   will-change: transform, opacity, background, border-color;
-  box-shadow:
-    0 2px 8px color-mix(in srgb, var(--text-primary) 4%, transparent),
-    0 0 0 0.5px color-mix(in srgb, var(--color-surface) 80%, transparent) inset;
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
 }
 
 .note-capsule:hover .menu-button {
   opacity: 1;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-accent) 15%, transparent),
-    color-mix(in srgb, var(--color-accent-strong) 25%, transparent)
-  );
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
   border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
-  transform: scale(1.15) rotate(90deg);
-  box-shadow:
-    0 4px 12px color-mix(in srgb, var(--color-accent) 25%, transparent),
-    0 0 0 0.5px color-mix(in srgb, var(--color-surface) 90%, transparent) inset,
-    inset 0 1px 0 color-mix(in srgb, var(--color-accent) 15%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
 }
 
 .menu-button:active {
-  transform: scale(1.05) rotate(90deg);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-accent) 20%, transparent),
-    color-mix(in srgb, var(--color-accent-strong) 30%, transparent)
-  );
+  transform: none;
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
   transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:
-    0 2px 6px color-mix(in srgb, var(--color-accent) 20%, transparent),
-    0 0 0 0.5px color-mix(in srgb, var(--color-surface) 95%, transparent) inset;
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
 }
 
 .menu-icon {
@@ -1632,21 +1596,33 @@ function onDelete() {
   position: absolute;
   left: 0;
   top: 100%;
-  margin-top: 8px;
+  margin-top: 6px;
   width: auto;
   min-width: auto;
   display: flex;
   align-items: center;
-  gap: 2px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  gap: 4px;
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl), var(--glass-shadow);
-  border: var(--glass-border);
-  padding: 6px;
+  box-shadow: var(--shadow-lg), var(--shadow-inset-soft);
+  border: 1px solid var(--color-border-subtle);
+  padding: 4px;
   z-index: 50;
   outline: none;
+}
+
+.menu-item {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-item .item-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .menu-item.active {
@@ -1700,8 +1676,6 @@ function onDelete() {
   background: var(--color-border-subtle);
   margin: 0 2px;
   flex-shrink: 0;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
 }
 
 
@@ -1758,7 +1732,7 @@ function onDelete() {
     --state-accent-soft-border,
     color-mix(in srgb, var(--color-accent) 40%, transparent)
   );
-  transform: scale(1.15) rotate(5deg);
+  transform: scale(1.03);
   box-shadow:
     var(
       --state-accent-soft-shadow,
@@ -1817,7 +1791,7 @@ function onDelete() {
       transparent
     )
   );
-  transform: translateY(1px);
+  transform: none;
 }
 
 .expand-icon.rotated {
@@ -1833,7 +1807,7 @@ function onDelete() {
 }
 
 .note-capsule:hover .expand-icon.rotated {
-  transform: rotate(180deg) translateY(-1px);
+  transform: rotate(180deg);
 }
 
 /* ============================================
@@ -2424,6 +2398,168 @@ function onDelete() {
 .tag:nth-child(5) { animation-delay: 0.3s; }
 .tag:nth-child(n+6) { animation-delay: 0.35s; }
 
+/* Business-calm overrides */
+.note-capsule:hover,
+.note-capsule:active,
+.note-capsule:hover .date-badge,
+.note-capsule:hover .note-type-top-accent,
+.note-capsule:hover .accent-dot,
+.note-capsule:hover .note-type-badge-corner,
+.note-capsule:hover .note-type-badge-dot,
+.note-capsule:hover .note-type-side-stripe,
+.note-capsule:hover .menu-button,
+.note-capsule:hover .expand-indicator,
+.note-capsule:hover .expand-icon,
+.note-capsule:hover .tags-container,
+.note-capsule:hover .tags-icon,
+.note-capsule:hover .tag-mini,
+.note-capsule:hover .tag,
+.tag:hover,
+.tag:active {
+  transform: none;
+}
+
+/* Business-calm animation overrides */
+.note-type-top-accent,
+.note-type-top-accent::before,
+.note-type-top-accent::after,
+.accent-dot,
+.note-type-badge-dot,
+.note-type-badge-corner,
+.expand-indicator,
+.tags-container,
+.tags-preview,
+.tag,
+.expanded-content,
+.divider,
+.note-content,
+.note-content p,
+.note-content ul,
+.note-content ol,
+.note-content blockquote,
+.note-content pre,
+.note-content code {
+  animation: none;
+}
+
+/* Business-calm motion clamp */
+.note-capsule,
+.note-type-top-accent,
+.accent-dot,
+.note-type-badge,
+.note-type-side-stripe,
+.note-type-badge-dot,
+.note-type-badge-corner,
+.menu-button,
+.expand-indicator,
+.expand-icon,
+.tags-container,
+.tags-preview,
+.tag,
+.divider,
+.expanded-content {
+  transition: none;
+}
+
+/* ==================== Card View Harmonization (Business) ==================== */
+.note-capsule {
+  border-radius: var(--radius-xl);
+  border-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+.note-capsule::before,
+.note-capsule::after {
+  display: none;
+}
+
+.dark .note-capsule::before,
+.dark .note-capsule::after {
+  display: none;
+}
+
+.note-header {
+  gap: 14px;
+}
+
+.date-badge {
+  width: 64px;
+  padding: 10px 8px;
+  background: color-mix(in srgb, var(--text-primary) 3%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  box-shadow: none;
+}
+
+.date-badge::before,
+.date-badge::after {
+  display: none;
+}
+
+.date-day {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-body);
+  text-shadow: none;
+}
+
+.date-month,
+.date-time {
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.note-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-body);
+  letter-spacing: 0;
+}
+
+.note-title::after {
+  opacity: 0;
+}
+
+.note-title::after,
+.note-capsule:hover .note-title::after {
+  display: none;
+  opacity: 0;
+}
+
+.note-preview {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+  letter-spacing: 0;
+  margin-bottom: 8px;
+}
+
+.tags-preview {
+  gap: 8px;
+}
+
+.tag-mini,
+.tag-more {
+  background: color-mix(in srgb, var(--text-primary) 4%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  color: var(--color-text-muted);
+}
+
+.note-capsule.grid-mode {
+  padding: 20px;
+  min-height: 0;
+}
+
+.note-capsule.grid-mode .note-header {
+  align-items: flex-start;
+}
+
+.note-capsule.grid-mode .note-title {
+  font-size: 16px;
+}
+
+.note-capsule.grid-mode .note-preview {
+  line-height: 1.5;
+}
+
 /* Meta Info */
 .meta-info {
   display: flex;
@@ -2599,6 +2735,84 @@ function onDelete() {
   .note-capsule.grid-mode .tag-mini {
     font-size: 9px;
     padding: 2px 6px;
+  }
+}
+
+/* ==================== Card View Rebuild (Grid Mode) ==================== */
+.note-capsule.grid-mode {
+  height: auto;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.note-capsule.grid-mode .note-header {
+  align-items: center;
+  gap: 14px;
+}
+
+.note-capsule.grid-mode .date-badge {
+  width: 58px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text-primary) 2%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+  box-shadow: none;
+}
+
+.note-capsule.grid-mode .date-day {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.note-capsule.grid-mode .date-month,
+.note-capsule.grid-mode .date-time {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+}
+
+.note-capsule.grid-mode .note-content {
+  gap: 6px;
+}
+
+.note-capsule.grid-mode .note-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.note-capsule.grid-mode .note-preview {
+  font-size: 12.5px;
+  line-height: 1.5;
+  height: 3em;
+  margin-bottom: 0;
+}
+
+.note-capsule.grid-mode .tags-preview {
+  margin-top: 6px;
+  gap: 6px;
+}
+
+.note-capsule.grid-mode .tag-mini,
+.note-capsule.grid-mode .tag-more {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.note-capsule.grid-mode .actions-menu {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .note-capsule.grid-mode {
+    padding: 16px;
+  }
+
+  .note-capsule.grid-mode .date-badge {
+    width: 54px;
   }
 }
 </style>

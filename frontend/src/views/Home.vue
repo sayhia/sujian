@@ -1,12 +1,5 @@
 <template>
    <div class="app-container">
-    <!-- Global Aurora Background -->
-    <div class="aurora-bg-layer">
-      <div class="aurora-glow aurora-glow-1"></div>
-      <div class="aurora-glow aurora-glow-2"></div>
-      <div class="aurora-glow aurora-glow-3"></div>
-    </div>
-    
     <!-- Header -->
     <header class="header">
       <div class="header-content">
@@ -1292,17 +1285,15 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 50;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  border-bottom: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
 .header-content {
   max-width: 1600px;
   margin: 0 auto;
-  padding: 16px 40px;
+  padding: 12px 32px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -1312,7 +1303,7 @@ onUnmounted(() => {
 }
 
 .header:hover .header-content {
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-palette-1) 8%, transparent);
+  box-shadow: none;
 }
 
 .logo {
@@ -1326,19 +1317,11 @@ onUnmounted(() => {
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: linear-gradient(
-    135deg,
-    var(--color-palette-2),
-    var(--color-palette-3)
-  );
+  background: var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px color-mix(
-      in srgb,
-      var(--color-palette-1) 35%,
-      transparent
-    );
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   position: relative;
@@ -1353,7 +1336,7 @@ onUnmounted(() => {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-palette-5) 30%, transparent);
+  background: color-mix(in srgb, #ffffff 30%, transparent);
   transform: translate(-50%, -50%);
   transition: width 0.4s ease, height 0.4s ease;
 }
@@ -1364,15 +1347,8 @@ onUnmounted(() => {
 }
 
 .logo-icon:hover {
-  transform: scale(1.05) rotate(5deg);
-  box-shadow: var(
-    --state-accent-soft-shadow,
-    0 8px 24px color-mix(
-      in srgb,
-      var(--color-palette-1) 42%,
-      transparent
-    )
-  );
+  transform: scale(1.01);
+  box-shadow: var(--shadow-sm);
 }
 
 .logo-feather {
@@ -1383,7 +1359,7 @@ onUnmounted(() => {
 .logo-feather {
   width: 22px;
   height: 22px;
-  color: var(--color-palette-5);
+  color: var(--color-on-accent, #ffffff);
 }
 
 .logo-text {
@@ -1431,8 +1407,8 @@ onUnmounted(() => {
   padding: 13px 100px 13px 50px;
   border-radius: var(--radius-lg, 16px);
   cursor: text;
-  background: color-mix(in srgb, var(--text-primary) 3%, var(--color-surface));
-  border: 2px solid transparent;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   font-size: 14px;
   color: var(--color-text-body);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1441,26 +1417,16 @@ onUnmounted(() => {
 }
 
 .search-input:focus {
-  background: var(--color-palette-5);
-  border-color: var(--color-palette-3);
+  background: var(--color-surface);
+  border-color: var(--color-accent);
   box-shadow:
-    0 0 0 4px
-      color-mix(in srgb, var(--color-accent) 22%, transparent),
-    var(
-      --state-accent-soft-shadow,
-      0 4px 12px color-mix(
-        in srgb,
-        var(--color-accent-strong) 28%,
-        transparent
-      )
-    );
+    0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
   outline: none;
-  transform: translateY(-1px);
 }
 
 .search-input:hover:not(:focus) {
-  background: color-mix(in srgb, var(--text-primary) 5%, var(--color-surface));
-  border-color: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  background: var(--color-surface);
+  border-color: color-mix(in srgb, var(--color-accent) 28%, transparent);
 }
 
 .search-input::placeholder {
@@ -1494,7 +1460,7 @@ onUnmounted(() => {
 }
 
 .search-clear:active {
-  transform: scale(0.9);
+  transform: none;
   background: color-mix(
     in srgb,
     var(--color-accent) 20%,
@@ -1537,17 +1503,15 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   margin-top: 8px;
-  background: color-mix(in srgb, var(--color-surface) 98%, transparent);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 16px;
-  box-shadow: 0 10px 40px color-mix(in srgb, var(--text-primary) 28%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-palette-3) 45%, var(--color-palette-4));
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), var(--shadow-inset-soft);
+  border: 1px solid var(--color-border-subtle);
   overflow: hidden;
   z-index: 100;
   max-height: 320px;
   overflow-y: auto;
-  animation: searchResultsSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: none;
 }
 
 @keyframes searchResultsSlideDown {
@@ -1572,7 +1536,7 @@ onUnmounted(() => {
   border-radius: 10px;
   margin: 2px 8px;
   position: relative;
-  will-change: transform, background-color;
+  will-change: background-color;
 }
 
 .search-result-item::before {
@@ -1588,19 +1552,7 @@ onUnmounted(() => {
 }
 
 .search-result-item:hover {
-  background: var(
-    --state-accent-soft-bg,
-    color-mix(in srgb, var(--color-accent) 16%, transparent)
-  );
-  transform: translateX(5px);
-  box-shadow: var(
-    --state-accent-soft-shadow,
-    0 4px 12px color-mix(
-      in srgb,
-      var(--color-accent-strong) 28%,
-      transparent
-    )
-  );
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
 }
 
 .search-result-item:hover::before {
@@ -1609,24 +1561,11 @@ onUnmounted(() => {
     var(--color-accent),
     var(--color-accent-strong)
   );
-  width: 3.5px;
+  width: 3px;
 }
 
 .search-result-item.active {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-accent) 20%, var(--color-surface)),
-    color-mix(in srgb, var(--color-accent-strong) 16%, var(--color-surface))
-  );
-  transform: translateX(5px);
-  box-shadow: var(
-    --state-accent-soft-shadow,
-    0 6px 18px color-mix(
-      in srgb,
-      var(--color-accent-strong) 36%,
-      transparent
-    )
-  );
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
 }
 
 .search-result-item.active::before {
@@ -1635,7 +1574,7 @@ onUnmounted(() => {
     var(--color-accent),
     var(--color-accent-strong)
   );
-  width: 4px;
+  width: 3px;
 }
 
 .search-result-item:focus-visible {
@@ -1763,9 +1702,10 @@ onUnmounted(() => {
 }
 
 .loading-icon {
-  width: 18px;
-  height: 18px;
-  animation: spin 1s linear infinite;
+  width: 14px;
+  height: 14px;
+  animation: none;
+  opacity: 0.6;
 }
 
 /* No Results */
@@ -2207,30 +2147,24 @@ onUnmounted(() => {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--color-surface) 95%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid color-mix(in srgb, var(--color-palette-3) 45%, var(--color-palette-4));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--color-text-muted);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 4%, transparent);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-soft);
   will-change: transform, box-shadow, background-color;
 }
 
 .btn-settings:hover {
   background: var(--color-surface);
-  border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
   color: var(--color-accent-strong);
-  box-shadow: 0 5px 14px color-mix(
-      in srgb,
-      var(--color-accent) 18%,
-      transparent
-    );
-  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-md);
+  transform: none;
 }
 
 .btn-settings:active {
@@ -2281,13 +2215,11 @@ onUnmounted(() => {
 .sidebar-inner {
   position: sticky;
   top: 108px;
-  background: var(--glass-sidebar-bg, var(--glass-bg));
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: var(--color-surface);
   border-radius: var(--radius-2xl, 24px);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--color-border-subtle);
   padding: var(--spacing-xl, 24px);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--shadow-md), var(--shadow-inset-soft);
 }
 
 .sidebar-section {
@@ -2316,9 +2248,9 @@ onUnmounted(() => {
   gap: 12px;
   width: 100%;
   padding: 14px 18px;
-  background: color-mix(in srgb, var(--color-surface) 65%, transparent);
-  border: 2px solid transparent;
-  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: left;
@@ -2341,61 +2273,32 @@ onUnmounted(() => {
 }
 
 .filter-tile:hover {
-  background: color-mix(in srgb, var(--color-surface) 90%, var(--glass-bg));
-  border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
-  box-shadow: 
-    0 4px 12px color-mix(in srgb, var(--color-accent) 15%, transparent),
-    0 1px 3px color-mix(in srgb, var(--color-accent) 10%, transparent);
-  transform: translateX(4px);
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-tile:hover::before {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-accent) 60%, transparent),
-    color-mix(in srgb, var(--color-accent-strong) 50%, transparent)
-  );
+  background: var(--color-accent);
 }
 
 .filter-tile:active {
-  transform: translateX(2px) scale(0.98);
+  transform: none;
   transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .filter-tile.active {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-accent) 28%, var(--color-surface)),
-    color-mix(in srgb, var(--color-accent-strong) 22%, var(--color-surface))
-  );
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
   border-color: var(--color-accent);
-  box-shadow: 0 6px 20px color-mix(
-      in srgb,
-      var(--color-accent) 30%,
-      transparent
-    ),
-    0 2px 8px color-mix(
-      in srgb,
-      var(--color-accent-strong) 20%,
-      transparent
-    );
-  animation: filterActive 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transform: translateX(2px);
+  box-shadow: var(--shadow-sm);
+  animation: none;
+  transform: none;
 }
 
 @keyframes filterActive {
-  0% {
-    transform: translateX(2px) scale(1);
-    opacity: 0.9;
-  }
-  50% {
-    transform: translateX(2px) scale(1.03);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(2px) scale(1);
-    opacity: 1;
-  }
+  0% { opacity: 0.9; }
+  50% { opacity: 1; }
+  100% { opacity: 1; }
 }
 
 .filter-tile-icon {
@@ -2837,6 +2740,76 @@ onUnmounted(() => {
   border-radius: 3px;
 }
 
+/* Sidebar Tags - Neutral Business Palette */
+.tag-search {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: none;
+}
+
+.tag-search:hover:not(:focus-within),
+.tag-search:focus-within {
+  background: var(--color-surface);
+  box-shadow: none;
+  transform: none;
+}
+
+.tag-search-icon {
+  color: var(--color-text-muted);
+  transform: none;
+}
+
+.tag-search-clear {
+  background: color-mix(in srgb, var(--text-primary) 4%, var(--color-surface));
+  transform: none;
+  box-shadow: none;
+}
+
+.tag-search-clear:hover,
+.tag-search-clear:active {
+  background: color-mix(in srgb, var(--text-primary) 6%, var(--color-surface));
+  transform: none;
+}
+
+.tag-search-clear .clear-icon {
+  color: var(--color-text-muted);
+  transform: none;
+}
+
+.tag-btn {
+  background: color-mix(in srgb, var(--text-primary) 4%, var(--color-surface));
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-body);
+  box-shadow: none;
+}
+
+.tag-btn:hover {
+  background: color-mix(in srgb, var(--text-primary) 6%, var(--color-surface));
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-body);
+  transform: none;
+  box-shadow: none;
+}
+
+.tag-btn.active {
+  background: color-mix(in srgb, var(--text-primary) 8%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  color: var(--color-text-body);
+}
+
+.tag-count {
+  background: color-mix(in srgb, var(--text-primary) 6%, var(--color-surface));
+  color: var(--color-text-muted);
+}
+
+.tag-btn:hover .tag-count,
+.tag-btn.active .tag-count {
+  background: color-mix(in srgb, var(--text-primary) 10%, var(--color-surface));
+  color: var(--color-text-body);
+  box-shadow: none;
+  animation: none;
+}
+
 /* View Toggle */
 .view-toggle {
   display: flex;
@@ -2851,8 +2824,8 @@ onUnmounted(() => {
   width: 100%;
   padding: 14px 16px;
   background: color-mix(in srgb, var(--color-surface) 60%, transparent);
-  border: 2px solid transparent;
-  border-radius: 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
@@ -2864,15 +2837,8 @@ onUnmounted(() => {
     color-mix(in srgb, var(--color-surface) 95%, #000000)
   );
   border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
-  transform: translateY(-2px);
-  box-shadow: var(
-    --state-accent-soft-shadow,
-    0 6px 18px color-mix(
-      in srgb,
-      var(--color-accent-strong) 28%,
-      transparent
-    )
-  );
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .view-btn:active {
@@ -2996,7 +2962,7 @@ onUnmounted(() => {
   width: 100%;
   padding: 12px 40px 12px 16px;
   background: color-mix(in srgb, var(--color-surface) 60%, transparent);
-  border: 2px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
@@ -3011,15 +2977,15 @@ onUnmounted(() => {
 .sort-select:hover {
   background: color-mix(in srgb, var(--color-surface) 95%, transparent);
   border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 .sort-select:focus {
   background: color-mix(in srgb, var(--color-surface) 98%, transparent);
   border-color: var(--color-accent);
   box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent),
-    0 2px 8px color-mix(in srgb, var(--color-accent) 12%, transparent);
+    0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent),
+    var(--shadow-sm);
   outline: none;
 }
 
@@ -3326,7 +3292,7 @@ onUnmounted(() => {
   padding: 14px 18px;
   border-radius: 14px;
   background: var(--color-surface-muted);
-  border: 2px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border-subtle);
   font-size: 16px;
   color: var(--color-text-body);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -3601,7 +3567,7 @@ onUnmounted(() => {
     color-mix(in srgb, var(--color-accent-strong) 40%, transparent)
   );
   border-radius: 10px;
-  border: 2px solid color-mix(in srgb, var(--text-primary) 2%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--text-primary) 2%, var(--color-surface));
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3802,9 +3768,10 @@ onUnmounted(() => {
 }
 
 .btn-loading {
-  width: 16px;
-  height: 16px;
-  animation: spin 1s linear infinite;
+  width: 14px;
+  height: 14px;
+  animation: none;
+  opacity: 0.6;
 }
 
 .btn-check {
@@ -4245,7 +4212,7 @@ onUnmounted(() => {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
@@ -4255,13 +4222,13 @@ onUnmounted(() => {
 }
 
 .color-btn:hover {
-  transform: scale(1.15);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 15%, transparent);
+  transform: scale(1.03);
+  box-shadow: var(--shadow-sm);
 }
 
 .color-btn.selected {
   border-color: var(--color-text-body);
-  transform: scale(1.1);
+  transform: scale(1.02);
 }
 
 .color-check {
@@ -4270,7 +4237,73 @@ onUnmounted(() => {
   color: var(--color-on-accent);
 }
 
+/* Business-calm overrides */
+.logo-icon:hover,
+.btn-settings:hover,
+.btn-settings:active,
+.search-result-item:hover,
+.search-result-item.active,
+.filter-tile:hover,
+.filter-tile:active,
+.view-btn:hover,
+.view-btn:active {
+  transform: none;
+}
+
+.filter-tile:hover .filter-tile-icon,
+.filter-tile.active .filter-tile-icon,
+.filter-tile.active .filter-tile-check {
+  transform: none;
+}
+
+/* Business-calm animation overrides */
+.filter-tile.active .filter-tile-check,
+.tag-btn.active .tag-count,
+.view-btn.active .view-btn-count,
+.fts-badge-icon,
+.form-input.invalid,
+.form-textarea.invalid,
+.form-error,
+.tag-preview,
+.preview-tag,
+.context-menu {
+  animation: none;
+}
+
+/* Business-calm motion clamp */
+.search-clear:active,
+.filter-tile-check,
+.tag-btn.active .tag-count,
+.view-btn.active .view-btn-count,
+.context-menu,
+.context-menu-item:hover,
+.context-menu-item:active {
+  transform: none;
+}
+
 /* Dark mode – component-level overrides moved to styles/theme-dark.css */
+
+/* Business-calm overrides (Home) */
+.search-result-item:hover,
+.search-result-item.active,
+.search-clear:hover,
+.search-clear:active,
+.filter-tile:hover,
+.filter-tile:active,
+.filter-tile:hover .filter-tile-icon,
+.filter-tile.active .filter-tile-icon,
+.filter-tile.active .filter-tile-check,
+.view-btn:hover,
+.view-btn:active,
+.view-btn.active,
+.sort-select:hover,
+.sort-select:focus,
+.context-item:hover,
+.context-item:active,
+.tag-chip:hover,
+.tag-chip:active,
+.tag-suggestions .suggestion-item:hover,
+.tag-suggestions .suggestion-item.highlighted {
+  transform: none;
+}
 </style>
-
-

@@ -471,7 +471,7 @@ async function handleSubmit() {
 .article-content-input {
   width: 100%;
   min-height: 500px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -497,9 +497,9 @@ async function handleSubmit() {
 .article-tags-input {
   width: 100%;
   padding: 13px 18px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-palette-5) 80%, var(--color-palette-4));
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   font-size: 14px;
   color: var(--color-palette-1);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -521,10 +521,10 @@ async function handleSubmit() {
   background: var(--color-palette-5);
   border-color: var(--color-palette-3);
   box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--color-palette-3) 20%, transparent),
-    0 2px 8px color-mix(in srgb, var(--color-palette-3) 15%, transparent);
+    0 0 0 3px color-mix(in srgb, var(--color-palette-3) 20%, transparent),
+    var(--shadow-sm);
   outline: none;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .article-tags-input::placeholder {
@@ -564,8 +564,8 @@ async function handleSubmit() {
 
 .article-btn-cancel {
   padding: 12px 24px;
-  border-radius: 12px;
-  border: 2px solid color-mix(in srgb, var(--color-palette-3) 40%, transparent);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-palette-3) 40%, transparent);
   background: color-mix(in srgb, var(--color-palette-5) 90%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -581,8 +581,8 @@ async function handleSubmit() {
 .article-btn-cancel:hover {
   background: var(--color-palette-5);
   border-color: color-mix(in srgb, var(--color-palette-3) 60%, transparent);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--color-palette-3) 20%, transparent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .article-btn-cancel:active {
@@ -681,12 +681,13 @@ async function handleSubmit() {
 
 .article-btn-loading,
 .article-btn-check {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .article-btn-loading {
-  animation: spin 1s linear infinite;
+  animation: none;
+  opacity: 0.6;
 }
 
 @keyframes spin {
@@ -795,5 +796,26 @@ async function handleSubmit() {
     padding: 10px 16px;
     font-size: 13px;
   }
+}
+
+/* Business-calm motion clamp (final) */
+.article-panel,
+.article-close,
+.article-btn-cancel,
+.article-btn-submit,
+.article-title-input,
+.article-content-input,
+.article-tags-input {
+  transition: none;
+}
+
+.article-panel:hover,
+.article-close:hover,
+.article-close:active,
+.article-btn-cancel:hover,
+.article-btn-cancel:active,
+.article-btn-submit:hover,
+.article-btn-submit:active {
+  transform: none;
 }
 </style>

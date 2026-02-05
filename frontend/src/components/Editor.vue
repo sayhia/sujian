@@ -1,58 +1,27 @@
 <template>
   <div class="editor-container">
-    <!-- Global Aurora Background -->
-    <div class="aurora-bg-layer">
-      <div class="aurora-glow aurora-glow-1"></div>
-      <div class="aurora-glow aurora-glow-2"></div>
-      <div class="aurora-glow aurora-glow-3"></div>
-    </div>
 
     <!-- 顶部导航栏 -->
-    <header class="editor-header">
-      <button class="nav-button back-button" @click="handleCancel" :aria-label="t('editor.back')">
-        <ArrowLeft class="nav-icon" />
-        <span class="nav-text">{{ t('editor.back') }}</span>
-      </button>
-
-      <div class="header-center">
-        <div class="page-indicator" :class="currentNoteType">
-          <Sparkles v-if="currentNoteType === 'quick'" class="indicator-icon" />
-          <FileText v-else class="indicator-icon" />
-          <span class="page-title">
-            {{ props.mode === 'create' ? (currentNoteType === 'article' ? t('editor.newArticle') : t('editor.newNote')) : (currentNoteType === 'article' ? '编辑文章' : '编辑灵感小记') }}
+    <header class="editor-topbar">
+      <div class="topbar-left">
+        <button class="nav-button back-button" @click="handleCancel" :aria-label="t('editor.back')">
+          <ArrowLeft class="nav-icon" />
+          <span class="nav-text">{{ t('editor.back') }}</span>
+        </button>
+        <div class="topbar-title">
+          <span class="topbar-eyebrow">
+            {{ props.mode === 'create'
+              ? (currentNoteType === 'article' ? t('editor.newArticle') : t('editor.newNote'))
+              : (currentNoteType === 'article' ? '编辑文章' : '编辑灵感小记')
+            }}
+          </span>
+          <span class="topbar-main">
+            {{ currentNoteType === 'article' ? t('editor.article') : t('editor.quickNote') }}
           </span>
         </div>
-        
-        <!-- 类型切换器（仅创建模式） -->
-        <transition name="type-switch">
-          <div v-if="showTypeSelector && props.mode === 'create'" class="type-switcher">
-            <button
-              type="button"
-              class="type-option"
-              :class="{ active: currentNoteType === 'quick' }"
-              @click="switchNoteType('quick')"
-              :aria-label="t('editor.quickNote')"
-              :aria-pressed="currentNoteType === 'quick'"
-              title="灵感小记"
-            >
-              <Sparkles class="type-option-icon" />
-            </button>
-            <button
-              type="button"
-              class="type-option"
-              :class="{ active: currentNoteType === 'article' }"
-              @click="switchNoteType('article')"
-              :aria-label="t('editor.article')"
-              :aria-pressed="currentNoteType === 'article'"
-              title="文章"
-            >
-              <FileText class="type-option-icon" />
-            </button>
-          </div>
-        </transition>
       </div>
 
-      <div class="header-actions">
+      <div class="topbar-actions">
         <button 
           class="nav-button action-button secondary-button" 
           @click="handleCancel"
@@ -76,7 +45,7 @@
     </header>
 
     <!-- 主编辑区域 -->
-    <main class="editor-main">
+    <main class="editor-main focus-layout">
       <!-- 加载骨架屏 -->
       <transition name="skeleton">
         <div v-if="!mounted" class="skeleton-loader">
@@ -88,194 +57,241 @@
 
       <!-- 实际内容 -->
       <transition name="fade-in">
-        <div v-show="mounted" class="editor-content-wrapper">
-          <!-- 中央编辑区 -->
-          <div class="editor-center-wrapper">
-            <div class="editor-center editor-card">
-              <form class="editor-form" @submit.prevent="handleSave">
-                <!-- 标题输入 -->
-                <div class="title-section" :class="[{ 'has-error': titleError, 'focused': titleFocused, 'dirty': titleDirty }, currentNoteType]">
-                  <div class="title-icon-wrapper">
-                    <Edit3 class="title-icon" />
-                  </div>
-                  <label for="title-input" class="visually-hidden">{{ t('editor.titleLabel') }}</label>
-                  <input
-                    id="title-input"
-                    ref="titleInputRef"
-                    v-model="formData.title"
-                    type="text"
-                    class="title-input"
-                    :placeholder="t('editor.titlePlaceholder')"
-                    :class="{ 'is-invalid': titleError }"
-                    @blur="titleTouched = true; titleFocused = false"
-                    @focus="titleFocused = true"
-                    @input="titleDirty = true"
-                    required
-                    :aria-describedby="titleError ? 'title-error' : undefined"
-                  />
-                  <div class="title-footer">
-                    <span class="char-count">{{ formData.title.length }}/200</span>
-                  </div>
-                  <div v-if="titleError" id="title-error" class="error-message title-error" role="alert">
-                    <AlertCircle class="error-icon" />
-                    {{ titleError }}
-                  </div>
+        <div v-show="mounted" class="editor-shell">
+          <form class="editor-form" @submit.prevent="handleSave">
+            <section class="editor-panel meta-panel">
+              <div class="meta-header">
+                <div class="meta-label">
+                  <Edit3 class="meta-icon" />
+                  <span>{{ t('editor.titleLabel') }}</span>
                 </div>
+                <transition name="type-switch">
+                  <div v-if="showTypeSelector && props.mode === 'create'" class="type-switcher">
+                    <button
+                      type="button"
+                      class="type-option"
+                      :class="{ active: currentNoteType === 'quick' }"
+                      @click="switchNoteType('quick')"
+                      :aria-label="t('editor.quickNote')"
+                      :aria-pressed="currentNoteType === 'quick'"
+                      title="灵感小记"
+                    >
+                      <Sparkles class="type-option-icon" />
+                    </button>
+                    <button
+                      type="button"
+                      class="type-option"
+                      :class="{ active: currentNoteType === 'article' }"
+                      @click="switchNoteType('article')"
+                      :aria-label="t('editor.article')"
+                      :aria-pressed="currentNoteType === 'article'"
+                      title="文章"
+                    >
+                      <FileText class="type-option-icon" />
+                    </button>
+                  </div>
+                </transition>
+              </div>
 
-                  <!-- 标签区域 -->
-                   <div class="tags-section" :class="{ 'focused': tagFocused, 'has-error': tagsLimitWarning }">
-                    <div class="tags-header">
-                      <div class="tags-header-left">
-                        <Hash class="tags-header-icon" />
-                         <div class="tags-header-info">
-                            <h3 id="tags-label" class="tags-header-title">{{ t('editor.tagsLabel') }}</h3>
-                            <span class="tags-count" :class="{ 'near-limit': formData.tags.length >= tagsLimit - 2, 'at-limit': formData.tags.length >= tagsLimit }">
-                              {{ formData.tags.length }}<span class="count-separator">/</span>{{ tagsLimit }}
-                            </span>
-                            <transition name="limit-warning">
-                              <span v-if="tagsLimitWarning" class="tags-limit-warning-icon" aria-live="polite">
-                                ⚠
-                              </span>
-                            </transition>
-                         </div>
+              <!-- 标题输入 -->
+              <div class="title-section" :class="[{ 'has-error': titleError, 'focused': titleFocused, 'dirty': titleDirty }, currentNoteType]">
+                <div class="title-icon-wrapper">
+                  <Edit3 class="title-icon" />
+                </div>
+                <label for="title-input" class="visually-hidden">{{ t('editor.titleLabel') }}</label>
+                <input
+                  id="title-input"
+                  ref="titleInputRef"
+                  v-model="formData.title"
+                  type="text"
+                  class="title-input"
+                  :placeholder="t('editor.titlePlaceholder')"
+                  :class="{ 'is-invalid': titleError }"
+                  @blur="titleTouched = true; titleFocused = false"
+                  @focus="titleFocused = true"
+                  @input="titleDirty = true"
+                  required
+                  :aria-describedby="titleError ? 'title-error' : undefined"
+                />
+                <div class="title-footer">
+                  <span class="char-count">{{ formData.title.length }}/200</span>
+                </div>
+                <div v-if="titleError" id="title-error" class="error-message title-error" role="alert">
+                  <AlertCircle class="error-icon" />
+                  {{ titleError }}
+                </div>
+              </div>
+
+              <!-- 标签区域 -->
+              <div class="tags-section" :class="{ 'focused': tagFocused, 'has-error': tagsLimitWarning }">
+                <div class="tags-header">
+                  <div class="tags-header-left">
+                    <Hash class="tags-header-icon" />
+                    <div class="tags-header-info">
+                      <h3 id="tags-label" class="tags-header-title">{{ t('editor.tagsLabel') }}</h3>
+                      <span class="tags-count" :class="{ 'near-limit': formData.tags.length >= tagsLimit - 2, 'at-limit': formData.tags.length >= tagsLimit }">
+                        {{ formData.tags.length }}<span class="count-separator">/</span>{{ tagsLimit }}
+                      </span>
+                      <transition name="limit-warning">
+                        <span v-if="tagsLimitWarning" class="tags-limit-warning-icon" aria-live="polite">
+                          ⚠
+                        </span>
+                      </transition>
+                    </div>
+                  </div>
+                  <button 
+                    v-if="formData.tags.length > 0"
+                    type="button"
+                    class="clear-tags-button"
+                    @click="confirmClearTags"
+                    :title="t('editor.clearTags')"
+                    :aria-label="t('editor.clearTags')"
+                  >
+                    <X class="clear-icon" />
+                  </button>
+                </div>
+                
+                <!-- 标签输入区域 - 内联标签显示 -->
+                <div class="tags-input-container">
+                  <div class="tags-input-wrapper">
+                    <div class="tags-field-wrapper">
+                      <div class="tags-display">
+                        <transition-group name="tag-list" tag="span">
+                          <span
+                            v-for="(tag, index) in formData.tags"
+                            :key="tag"
+                            class="tag-chip"
+                            :class="{ 
+                              'last-tag': index === formData.tags.length - 1,
+                              'shake-animation': shakingTag === tag 
+                            }"
+                            @click.right.prevent="showTagColorPicker(tag)"
+                            @click.left.prevent="removeTag(tag)"
+                          >
+                            <span class="tag-chip-text">#{{ tag }}</span>
+                          </span>
+                        </transition-group>
+                        <input
+                          id="tag-input"
+                          ref="tagInputRef"
+                          v-model="tagInput"
+                          type="text"
+                          class="tags-field"
+                          :placeholder="formData.tags.length === 0 ? t('editor.tagsPlaceholder') : ''"
+                          @keydown="handleTagKeydown"
+                          @input="handleTagInputChange"
+                          @focus="tagFocused = true"
+                          @blur="handleTagBlur"
+                          @paste="handleTagPaste"
+                          aria-labelledby="tags-label"
+                          aria-describedby="tags-count"
+                        />
                       </div>
                       <button 
-                         v-if="formData.tags.length > 0"
-                         type="button"
-                         class="clear-tags-button"
-                         @click="confirmClearTags"
-                         :title="t('editor.clearTags')"
-                         :aria-label="t('editor.clearTags')"
-                       >
-                         <X class="clear-icon" />
-                       </button>
+                        type="button" 
+                        class="add-tag-button"
+                        @click="handleAddTag"
+                        :disabled="!canAddTag"
+                        :title="canAddTag ? t('editor.tagsAdd') : `已达到${tagsLimit}个标签上限`"
+                        :aria-label="canAddTag ? t('editor.tagsAdd') : `已达到${tagsLimit}个标签上限`"
+                      >
+                        <Plus class="add-icon" />
+                      </button>
                     </div>
-                     
-                    <!-- 标签输入区域 - 内联标签显示 -->
-                    <div class="tags-input-container">
-                      <div class="tags-input-wrapper">
-                         <div class="tags-field-wrapper">
-                           <div class="tags-display">
-                             <transition-group name="tag-list" tag="span">
-                               <span
-                                v-for="(tag, index) in formData.tags"
-                                :key="tag"
-                                class="tag-chip"
-                                :class="{ 
-                                  'last-tag': index === formData.tags.length - 1,
-                                  'shake-animation': shakingTag === tag 
-                                }"
-                                @click.right.prevent="showTagColorPicker(tag)"
-                                @click.left.prevent="removeTag(tag)"
-                              >
-                                 <span class="tag-chip-text">#{{ tag }}</span>
-                               </span>
-                             </transition-group>
-                             <input
-                               id="tag-input"
-                               ref="tagInputRef"
-                               v-model="tagInput"
-                               type="text"
-                               class="tags-field"
-                               :placeholder="formData.tags.length === 0 ? t('editor.tagsPlaceholder') : ''"
-                               @keydown="handleTagKeydown"
-                               @input="handleTagInputChange"
-                               @focus="tagFocused = true"
-                               @blur="handleTagBlur"
-                               @paste="handleTagPaste"
-                               aria-labelledby="tags-label"
-                               aria-describedby="tags-count"
-                             />
-                           </div>
-                           <button 
-                             type="button" 
-                             class="add-tag-button"
-                             @click="handleAddTag"
-                             :disabled="!canAddTag"
-                             :title="canAddTag ? t('editor.tagsAdd') : `已达到${tagsLimit}个标签上限`"
-                             :aria-label="canAddTag ? t('editor.tagsAdd') : `已达到${tagsLimit}个标签上限`"
-                           >
-                             <Plus class="add-icon" />
-                           </button>
-                         </div>
-                         
-                         <!-- 输入提示 -->
-                         <div class="tags-input-hint" :class="{ 'focused': tagFocused }">
-                           <span class="hint-text">
-                             <template v-if="tagFocused">
-                               <kbd>Enter</kbd> 添加 · <kbd>Esc</kbd> 取消 · <kbd>Backspace</kbd> 删除末尾
-                             </template>
-                             <template v-else>
-                               <span class="hint-action">点击标签</span> · <span class="hint-shortcut">逗号或 Enter</span> 添加
-                             </template>
-                           </span>
-                         </div>
-                      </div>
+                    
+                    <!-- 输入提示 -->
+                    <div class="tags-input-hint" :class="{ 'focused': tagFocused }">
+                      <span class="hint-text">
+                        <template v-if="tagFocused">
+                          <kbd>Enter</kbd> 添加 · <kbd>Esc</kbd> 取消 · <kbd>Backspace</kbd> 删除末尾
+                        </template>
+                        <template v-else>
+                          <span class="hint-action">点击标签</span> · <span class="hint-shortcut">逗号或 Enter</span> 添加
+                        </template>
+                      </span>
                     </div>
-                     
-                    <!-- 标签建议 -->
-                    <transition name="suggestions">
-                      <div v-if="showTagSuggestions && tagSuggestions.length > 0 && tagFocused" class="tag-suggestions">
-                         <div
-                           v-for="(tag, index) in tagSuggestions"
-                           :key="tag"
-                           class="suggestion-item"
-                           :class="{ 'highlighted': suggestionIndex === index, 'last-item': index === tagSuggestions.length - 1 }"
-                           @click="selectTagSuggestion(tag)"
-                           @mouseover="suggestionIndex = index"
-                         >
-                           <span class="suggestion-text">#{{ tag }}</span>
-                           <span class="suggestion-shortcut">
-                             <kbd v-if="index < 9">{{ index + 1 }}</kbd>
-                           </span>
-                         </div>
-                      </div>
-                    </transition>
-                   </div>
-
-                <!-- 内容编辑区 -->
-                <div class="content-section" :class="[{ 'has-error': contentError, 'focused': contentFocused }, currentNoteType]">
-                  <div class="content-header">
-                    <FileText class="content-icon" />
-                    <div class="content-header-info">
-                       <span id="content-label" class="content-type">{{ t('editor.contentLabel') }}</span>
-                      <span class="content-stats">{{ wordCount }} {{ t('editor.words') }} · {{ readTime }}</span>
-                    </div>
-                  </div>
-                  <MarkdownEditor
-                    v-if="currentNoteType === 'article'"
-                    v-model="formData.content"
-                    :placeholder="t('editor.contentPlaceholder')"
-                    @blur="contentTouched = true"
-                    class="markdown-editor-full"
-                    :class="{ 'is-invalid': contentError }"
-                  />
-                   <textarea
-                    v-else
-                    id="content-input"
-                    v-model="formData.content"
-                    class="content-textarea"
-                    :placeholder="t('editor.contentPlaceholder')"
-                    :class="{ 'is-invalid': contentError }"
-                    @blur="contentTouched = true"
-                    @focus="handleContentFocus"
-                    @input="handleContentChange"
-                    @keydown="handleTextareaKeydown"
-                    required
-                    :aria-labelledby="'content-label'"
-                    :aria-describedby="contentError ? 'content-error' : undefined"
-                  />
-                   <div v-if="contentError" id="content-error" class="error-message content-error" role="alert">
-                    <AlertCircle class="error-icon" />
-                    {{ contentError }}
                   </div>
                 </div>
-               </form>
-             </div>
-           </div>
-         </div>
-       </transition>
-     </main>
+                
+                <!-- 标签建议 -->
+                <transition name="suggestions">
+                  <div v-if="showTagSuggestions && tagSuggestions.length > 0 && tagFocused" class="tag-suggestions">
+                    <div
+                      v-for="(tag, index) in tagSuggestions"
+                      :key="tag"
+                      class="suggestion-item"
+                      :class="{ 'highlighted': suggestionIndex === index, 'last-item': index === tagSuggestions.length - 1 }"
+                      @click="selectTagSuggestion(tag)"
+                      @mouseover="suggestionIndex = index"
+                    >
+                      <span class="suggestion-text">#{{ tag }}</span>
+                      <span class="suggestion-shortcut">
+                        <kbd v-if="index < 9">{{ index + 1 }}</kbd>
+                      </span>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+            </section>
+
+            <!-- 内容编辑区 -->
+            <section class="editor-panel content-panel" :class="[{ 'has-error': contentError, 'focused': contentFocused }, currentNoteType]">
+              <div class="content-header">
+                <FileText class="content-icon" />
+                <div class="content-header-info">
+                  <span id="content-label" class="content-type">{{ t('editor.contentLabel') }}</span>
+                  <span class="content-stats">{{ wordCount }} {{ t('editor.words') }} · {{ readTime }}</span>
+                </div>
+              </div>
+              <MarkdownEditor
+                v-if="currentNoteType === 'article'"
+                v-show="markdownEditorReady"
+                v-model="formData.content"
+                :placeholder="t('editor.contentPlaceholder')"
+                @blur="contentTouched = true"
+                @ready="markdownEditorReady = true"
+                class="markdown-editor-full"
+                :class="{ 'is-invalid': contentError }"
+              />
+              <textarea
+                v-if="currentNoteType === 'article' && !markdownEditorReady"
+                id="content-input"
+                v-model="formData.content"
+                class="content-textarea"
+                :placeholder="t('editor.contentPlaceholder')"
+                :class="{ 'is-invalid': contentError }"
+                @blur="contentTouched = true"
+                @focus="handleContentFocus"
+                @input="handleContentChange"
+                @keydown="handleTextareaKeydown"
+                required
+                :aria-labelledby="'content-label'"
+                :aria-describedby="contentError ? 'content-error' : undefined"
+              />
+              <textarea
+                v-else-if="currentNoteType !== 'article'"
+                id="content-input"
+                v-model="formData.content"
+                class="content-textarea"
+                :placeholder="t('editor.contentPlaceholder')"
+                :class="{ 'is-invalid': contentError }"
+                @blur="contentTouched = true"
+                @focus="handleContentFocus"
+                @input="handleContentChange"
+                @keydown="handleTextareaKeydown"
+                required
+                :aria-labelledby="'content-label'"
+                :aria-describedby="contentError ? 'content-error' : undefined"
+              />
+              <div v-if="contentError" id="content-error" class="error-message content-error" role="alert">
+                <AlertCircle class="error-icon" />
+                {{ contentError }}
+              </div>
+            </section>
+          </form>
+        </div>
+      </transition>
+    </main>
 
     <!-- 确认对话框 -->
     <Teleport to="body">
@@ -317,7 +333,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted, nextTick, onErrorCaptured } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { 
   ArrowLeft, X, Check, Loader2, Sparkles, FileText, 
@@ -394,6 +410,7 @@ const contentChanged = ref(false);
 const tagsChanged = ref(false);
 const titleDirty = ref(false);
 const showUnsavedDialog = ref(false);
+const markdownEditorReady = ref(true);
 const showColorPicker = ref(false);
 const selectedTagColor = ref('');
 const selectedTagForColor = ref<string | null>(null);
@@ -1026,6 +1043,16 @@ onMounted(() => {
   window.addEventListener('beforeunload', handleBeforeUnload);
 });
 
+onErrorCaptured((error, instance, info) => {
+  const componentName = (instance as any)?.type?.name || '';
+  if (componentName === 'MarkdownEditor' || info.includes('MarkdownEditor')) {
+    console.error('[Editor] MarkdownEditor failed, falling back to textarea.', error);
+    markdownEditorReady.value = false;
+    return false;
+  }
+  return false;
+});
+
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
   window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -1058,40 +1085,66 @@ onUnmounted(() => {
   background: transparent;
   display: flex;
   flex-direction: column;
+  --editor-max-width: 1120px;
+  --editor-gutter: clamp(16px, 4vw, 72px);
 }
 
 /* ==================== 顶部导航栏 ==================== */
-.editor-header {
+.editor-topbar {
   position: sticky;
   top: 0;
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 16px 36px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  border-bottom: 1px solid var(--glass-border);
+  gap: 16px;
+  padding: 14px var(--editor-gutter);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
   transition: all 0.3s ease;
 }
 
-.editor-header:hover {
+.editor-topbar:hover {
   background: var(--color-surface);
-  border-bottom-color: var(--glass-border);
+  border-bottom-color: var(--color-border-subtle);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbar-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topbar-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+
+.topbar-main {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-body);
 }
 
 .nav-button {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 8px 14px;
   font-size: 14px;
   font-weight: 500;
   background: transparent;
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--color-text-secondary);
@@ -1113,43 +1166,7 @@ onUnmounted(() => {
   display: inline;
 }
 
-.header-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.page-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.page-indicator:hover {
-  background: var(--color-surface);
-  border-color: var(--glass-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.indicator-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--color-accent);
-}
-
-.page-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-body);
-}
-
-.header-actions {
+.topbar-actions {
   display: flex;
   gap: 10px;
   align-items: center;
@@ -1202,7 +1219,8 @@ onUnmounted(() => {
 }
 
 .spinning {
-  animation: spin 1s linear infinite;
+  animation: none;
+  opacity: 0.6;
 }
 
 @keyframes spin {
@@ -1215,10 +1233,9 @@ onUnmounted(() => {
   display: flex;
   gap: 2px;
   padding: 3px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 10px;
-  backdrop-filter: blur(var(--glass-blur));
   transition: all 0.2s ease;
 }
 
@@ -1272,20 +1289,79 @@ onUnmounted(() => {
   transform: translateY(-4px);
 }
 
+/* ==================== 主体布局 ==================== */
+.editor-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px var(--editor-gutter) 80px;
+}
+
+.editor-main > * {
+  width: min(100%, var(--editor-max-width));
+}
+
+.editor-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.editor-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
+  padding: 26px 30px;
+  box-shadow: var(--shadow-md), var(--shadow-inset-soft);
+}
+
+.meta-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.meta-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.meta-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-accent);
+}
+
 /* 响应式：标题区域 */
 @media (max-width: 768px) {
-  .header-center {
+  .editor-topbar {
     flex-direction: column;
-    gap: 8px;
+    align-items: stretch;
+    gap: 10px;
   }
   
-  .type-switcher {
-    width: 100%;
+  .topbar-left {
+    justify-content: space-between;
   }
   
-  .page-indicator {
-    width: 100%;
-    justify-content: center;
+  .topbar-actions {
+    justify-content: space-between;
   }
 }
 
@@ -1311,7 +1387,7 @@ onUnmounted(() => {
   background: linear-gradient(90deg, var(--color-border) 0%, transparent 50%, var(--color-border) 100%);
   background-size: 200% 100%;
   border-radius: 14px;
-  animation: shimmer 1.5s infinite;
+  animation: none;
 }
 
 .skeleton-tags {
@@ -1319,8 +1395,7 @@ onUnmounted(() => {
   background: linear-gradient(90deg, var(--color-border) 0%, transparent 50%, var(--color-border) 100%);
   background-size: 200% 100%;
   border-radius: 12px;
-  animation: shimmer 1.5s infinite;
-  animation-delay: 0.2s;
+  animation: none;
 }
 
 .skeleton-content {
@@ -1329,8 +1404,7 @@ onUnmounted(() => {
   background: linear-gradient(90deg, var(--color-border) 0%, transparent 50%, var(--color-border) 100%);
   background-size: 200% 100%;
   border-radius: 14px;
-  animation: shimmer 1.5s infinite;
-  animation-delay: 0.4s;
+  animation: none;
 }
 
 @keyframes shimmer {
@@ -1395,6 +1469,14 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
+.editor-card {
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 64px 72px;
+  box-shadow: var(--shadow-lg);
+}
+
 .editor-form {
   display: flex;
   flex-direction: column;
@@ -1406,20 +1488,20 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 0 0 24px 0;
+  gap: 16px;
+  padding: 0 0 12px 0;
   background: transparent;
-  border-bottom: 2px solid var(--glass-border);
+  border-bottom: 1px solid var(--color-border-subtle);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .title-section:hover {
-  border-bottom-color: var(--glass-border);
+  border-bottom-color: var(--color-border-subtle);
 }
 
 .title-section.focused {
   border-bottom-color: var(--color-accent);
-  border-bottom-width: 3px;
+  border-bottom-width: 2px;
 }
 
 .title-section.has-error {
@@ -1430,10 +1512,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   color: var(--color-accent);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   transition: all 0.3s ease;
 }
@@ -1450,14 +1532,14 @@ onUnmounted(() => {
 }
 
 .title-icon {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 
 .title-input {
   flex: 1;
-  padding: 16px 0;
-  font-size: 42px;
+  padding: 8px 0;
+  font-size: 30px;
   font-weight: 800;
   line-height: 1.2;
   color: var(--color-text-body);
@@ -1479,16 +1561,16 @@ onUnmounted(() => {
 
 .title-footer {
   position: absolute;
-  right: 20px;
+  right: 8px;
   display: flex;
   align-items: center;
 }
 
 .char-count {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--color-text-muted);
   font-weight: 500;
-  padding: 5px 10px;
+  padding: 4px 8px;
   background: var(--glass-bg);
   border-radius: 8px;
   border: 1px solid var(--glass-border);
@@ -1507,7 +1589,7 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--color-status-danger) 12%, transparent);
   border: 1px solid var(--color-status-danger);
   border-radius: 10px;
-  animation: slideDown 0.2s ease;
+  animation: none;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
@@ -1532,10 +1614,10 @@ onUnmounted(() => {
 .tags-section {
   background: transparent;
   border: none;
-  padding: 16px 0;
+  padding: 6px 0 10px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
@@ -1553,14 +1635,14 @@ onUnmounted(() => {
 }
 
 .tags-header-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   color: var(--color-accent);
   opacity: 0.9;
 }
 
 .tags-header-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-text-body);
 }
@@ -1572,10 +1654,10 @@ onUnmounted(() => {
 }
 
 .tags-count {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-muted);
-  padding: 5px 12px;
+  padding: 4px 10px;
   background: var(--glass-bg);
   border-radius: 8px;
   border: 1px solid var(--glass-border);
@@ -1596,15 +1678,15 @@ onUnmounted(() => {
 .tags-limit-warning-icon {
   font-size: 13px;
   color: var(--color-status-danger);
-  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: none;
 }
 
 .clear-tags-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: transparent;
   border: 1px solid var(--glass-border);
   border-radius: 10px;
@@ -1617,12 +1699,12 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--color-status-danger) 12%, transparent);
   border-color: var(--color-status-danger);
   color: var(--color-status-danger);
-  transform: scale(1.08) rotate(90deg);
+  transform: none;
 }
 
 .clear-icon {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
 }
 
 /* 标签输入容器 */
@@ -1642,23 +1724,23 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   background: var(--color-surface);
-  border: 2px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 12px 16px;
-  min-height: 52px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 8px 12px;
+  min-height: 42px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .tags-section.focused .tags-field-wrapper {
   border-color: var(--color-accent);
   background: var(--color-surface);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-accent) 12%, transparent);
-  transform: translateY(-3px);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  transform: none;
 }
 
 .tags-section.has-error .tags-field-wrapper {
   border-color: var(--color-status-danger);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-status-danger) 12%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-status-danger) 12%, transparent);
 }
 
 .tags-display {
@@ -1666,7 +1748,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   min-height: 28px;
 }
 
@@ -1675,11 +1757,11 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
+  padding: 6px 10px;
   background: color-mix(in srgb, var(--color-accent) 14%, var(--glass-bg));
   border: 1.5px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
-  border-radius: 24px;
-  font-size: 13px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
   font-weight: 500;
   color: var(--color-accent-strong);
   cursor: pointer;
@@ -1691,8 +1773,8 @@ onUnmounted(() => {
 .tag-chip:hover {
   background: color-mix(in srgb, var(--color-accent) 20%, var(--glass-bg));
   border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .tag-chip:active {
@@ -1700,14 +1782,14 @@ onUnmounted(() => {
 }
 
 .tag-chip.shake-animation {
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  animation: none;
 }
 
 .tags-field {
   flex: 1;
   min-width: 120px;
-  padding: 6px 0;
-  font-size: 14px;
+  padding: 4px 0;
+  font-size: 13px;
   color: var(--color-text-body);
   background: transparent;
   border: none;
@@ -1716,7 +1798,7 @@ onUnmounted(() => {
 
 .tags-field::placeholder {
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 12px;
   opacity: 0.5;
 }
 
@@ -1725,8 +1807,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%);
   border: none;
   border-radius: 12px;
@@ -1738,8 +1820,8 @@ onUnmounted(() => {
 }
 
 .add-tag-button:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.08);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .add-tag-button:active:not(:disabled) {
@@ -1754,8 +1836,8 @@ onUnmounted(() => {
 }
 
 .add-icon {
-  width: 17px;
-  height: 17px;
+  width: 13px;
+  height: 13px;
 }
 
 /* 输入提示 */
@@ -1797,11 +1879,10 @@ onUnmounted(() => {
   max-height: 220px;
   overflow-y: auto;
   background: var(--color-surface);
-  border: 2px solid var(--glass-border);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 14px;
-  box-shadow: 0 10px 32px rgba(0,0,0,0.15);
+  box-shadow: var(--shadow-md);
   z-index: 10;
-  backdrop-filter: blur(12px);
 }
 
 .suggestion-item {
@@ -1818,7 +1899,7 @@ onUnmounted(() => {
 .suggestion-item:hover,
 .suggestion-item.highlighted {
   background: color-mix(in srgb, var(--color-accent) 14%, transparent);
-  transform: translateX(4px);
+  transform: none;
 }
 
 .suggestion-shortcut kbd {
@@ -1827,18 +1908,18 @@ onUnmounted(() => {
 }
 
 /* ==================== 内容编辑区 ==================== */
-.content-section {
+.content-panel {
   position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.content-section.focused {
+.content-panel.focused {
   background: var(--color-surface);
-  border: 2px solid var(--color-accent);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-accent) 12%, transparent);
-  border-radius: 14px;
+  border: 1px solid var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-radius: var(--radius-lg);
 }
 
 .content-header {
@@ -1846,7 +1927,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 18px 0;
-  border-bottom: 2px solid var(--glass-border);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .content-icon {
@@ -1926,14 +2007,24 @@ onUnmounted(() => {
 .markdown-editor-full {
   width: 100%;
   flex: 1;
-  min-height: calc(100vh - 500px);
-  background: var(--color-surface);
+  min-height: calc(100vh - 460px);
+  background: transparent;
   border: none;
-  border-radius: 0;
+  border-radius: 14px;
 }
 
 .markdown-editor-full:focus-within {
-  background: var(--color-surface);
+  background: transparent;
+}
+
+.markdown-editor-full :deep(.markdown-editor-container) {
+  min-height: 520px;
+  max-height: none;
+}
+
+.markdown-editor-full :deep(.markdown-editor-textarea),
+.markdown-editor-full :deep(.markdown-editor-preview) {
+  min-height: 520px;
 }
 
 /* ==================== 侧边栏样式重构（已移除） ==================== */
@@ -2104,12 +2195,12 @@ onUnmounted(() => {
     padding: 24px 48px;
   }
   
-  .editor-card {
-    padding: 56px 64px;
+  .editor-panel {
+    padding: 22px 26px;
   }
   
   .title-input {
-    font-size: 38px;
+    font-size: 30px;
   }
 }
 
@@ -2128,22 +2219,22 @@ onUnmounted(() => {
     height: 14px;
   }
   
-  .editor-card {
-    padding: 32px 24px;
+  .editor-panel {
+    padding: 20px 18px;
   }
   
   .title-input {
-    font-size: 32px;
+    font-size: 26px;
   }
   
   .title-icon-wrapper {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
   }
   
   .title-icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
   }
   
   .title-footer {
@@ -2151,153 +2242,37 @@ onUnmounted(() => {
   }
   
   .tags-field-wrapper {
-    padding: 10px 12px;
-    min-height: 48px;
+    padding: 8px 10px;
+    min-height: 40px;
   }
   
   .tags-display {
-    gap: 8px;
+    gap: 6px;
   }
   
   .tag-chip {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-  
-  .add-tag-button {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .add-icon {
-    width: 15px;
-    height: 15px;
-  }
-  
-  .clear-tags-button {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .clear-icon {
-    width: 13px;
-    height: 13px;
-  }
-  
-  .content-textarea {
-    padding: 20px 24px;
-    font-size: 15px;
-  }
-  
-  .content-header {
-    padding: 14px 0;
-  }
-  
-  .content-icon {
-    width: 18px;
-    height: 18px;
-  }
-  
-  .content-error {
-    bottom: 16px;
-    font-size: 11px;
-    padding: 6px 12px;
-  }
-  
-  .title-error {
-    bottom: -28px;
-    font-size: 11px;
-    padding: 6px 12px;
-  }
-  
-  .char-count {
-    font-size: 10px;
-    padding: 4px 8px;
-  }
-}
-
-/* Mobile layout */
-@media (max-width: 900px) {
-  .editor-main {
-    padding: 16px;
-  }
-  
-  .type-option {
     padding: 6px 10px;
-  }
-  
-  .type-option-icon {
-    width: 14px;
-    height: 14px;
-  }
-  
-  .editor-card {
-    padding: 24px;
-  }
-  
-  .type-option {
-    padding: 7px 10px;
-  }
-  
-  .type-option-icon {
-    width: 14px;
-    height: 14px;
-  }
-  
-  .editor-card {
-    padding: 32px 24px;
-  }
-  
-  .title-input {
-    font-size: 32px;
-  }
-  
-  .title-icon-wrapper {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .title-icon {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .title-footer {
-    right: 16px;
-  }
-  
-  .tags-field-wrapper {
-    padding: 10px 12px;
-    min-height: 48px;
-  }
-  
-  .tags-display {
-    gap: 8px;
-  }
-  
-  .tag-chip {
-    padding: 8px 12px;
-    font-size: 12px;
+    font-size: 11px;
   }
   
   .add-tag-button {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
   
   .add-icon {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
   
   .clear-tags-button {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
   
   .clear-icon {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
   }
   
   .content-textarea {
@@ -2333,4 +2308,62 @@ onUnmounted(() => {
 }
 
 /* ==================== 动画与交互 ==================== */
+
+/* Business-calm motion clamp (final) */
+.editor-container .editor-topbar,
+.editor-container .editor-panel,
+.editor-container .back-button,
+.editor-container .action-button,
+.editor-container .secondary-button,
+.editor-container .primary-button,
+.editor-container .type-switcher,
+.editor-container .type-option,
+.editor-container .type-card,
+.editor-container .title-section,
+.editor-container .tag-chip,
+.editor-container .add-tag-button,
+.editor-container .clear-tags-button,
+.editor-container .suggestion-item,
+.editor-container .stat-item {
+  transition: none;
+}
+
+.editor-container .editor-topbar:hover,
+.editor-container .back-button:hover,
+.editor-container .action-button:hover,
+.editor-container .secondary-button:hover,
+.editor-container .primary-button:hover,
+.editor-container .type-switcher:hover,
+.editor-container .type-option:hover,
+.editor-container .type-option.active,
+.editor-container .type-card:hover,
+.editor-container .type-card.active,
+.editor-container .title-section:hover,
+.editor-container .title-section:hover .title-icon-wrapper,
+.editor-container .tag-chip:hover,
+.editor-container .tag-chip:active,
+.editor-container .add-tag-button:hover,
+.editor-container .add-tag-button:active,
+.editor-container .clear-tags-button:hover,
+.editor-container .suggestion-item:hover,
+.editor-container .stat-item:hover {
+  transform: none;
+}
+
+.editor-container .fade-in-enter-active,
+.editor-container .fade-in-leave-active,
+.editor-container .tag-list-enter-active,
+.editor-container .tag-list-leave-active,
+.editor-container .type-switch-enter-active,
+.editor-container .type-switch-leave-active {
+  transition: none;
+}
+
+.editor-container .fade-in-enter-from,
+.editor-container .fade-in-leave-to,
+.editor-container .tag-list-enter-from,
+.editor-container .tag-list-leave-to {
+  opacity: 1;
+  transform: none;
+}
 </style>

@@ -21,13 +21,15 @@
   --color-status-info: var(--color-info);
   --color-status-warning: var(--color-warning);
   --color-status-danger: var(--color-danger);
+  --ui-border-width: 1px;
+  --ui-focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
 
   /* --- Shared Constants --- */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
   --radius-full: 9999px;
   
   /* --- Shadows (Refined for High-End Feel) --- */
@@ -36,25 +38,25 @@
   
   --shadow-sm: 0 1px 2px -1px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 9%));
   --shadow-md: 
-    0 3px 5px -2px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 3%)),
-    0 7px 14px -5px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 5%));
+    0 2px 6px -2px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 4%)),
+    0 6px 16px -6px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 6%));
   --shadow-lg: 
-    0 10px 15px -3px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 3%)),
-    0 4px 6px -2px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 1%));
+    0 8px 18px -6px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 6%)),
+    0 3px 8px -4px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 4%));
   --shadow-xl: 
-    0 20px 25px -5px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 3%)),
-    0 8px 10px -6px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 1%));
+    0 16px 26px -10px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 7%)),
+    0 6px 14px -8px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 5%));
+  --shadow-inset-soft: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 75%, #ffffff);
 
   /* --- Glassmorphism System --- */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-sidebar-bg: rgba(255, 255, 255, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-blur: 24px;
-  --glass-saturate: 180%;
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-sidebar-bg: rgba(255, 255, 255, 0.96);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-blur: 10px;
+  --glass-saturate: 120%;
   --glass-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 8px 20px rgba(15, 23, 42, 0.06);
 
   /* --- Motion --- */
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -73,12 +75,12 @@ html.light-purple {
   --palette-3: #B484B0;
   --palette-4: #EEDACA;
   --palette-5: #F8F4F0;
-  --surface-bg: var(--palette-5);
-  --surface-muted: var(--palette-4);
+  --surface-bg: #ffffff;
+  --surface-muted: #ffffff;
   --surface-elevated: #ffffff;
   --text-primary: var(--palette-1);
-  --text-muted: var(--palette-2);
-  --border-subtle: color-mix(in srgb, var(--palette-3) 55%, var(--palette-4));
+  --text-muted: color-mix(in srgb, var(--palette-2) 95%, var(--palette-3));
+  --border-subtle: color-mix(in srgb, var(--palette-3) 60%, var(--palette-4));
   --accent: var(--palette-3);
   --accent-strong: var(--palette-1);
   --color-on-accent: var(--palette-5);
@@ -94,7 +96,7 @@ html.light-purple {
   --type-article-strong: var(--palette-1);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 15%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 16%, transparent);
   --selection-color: var(--text-primary);
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, white);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, white);
@@ -123,16 +125,16 @@ html.dark-purple {
   --palette-3: #B484B0;
   --palette-4: #EEDACA;
   --palette-5: #F8F4F0;
-  --glass-bg: rgba(28, 22, 35, 0.7);
-  --glass-sidebar-bg: rgba(28, 22, 35, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --surface-bg: color-mix(in srgb, var(--palette-1) 85%, black);
-  --surface-muted: color-mix(in srgb, var(--palette-1) 70%, black);
-  --surface-elevated: color-mix(in srgb, var(--palette-2) 60%, black);
+  --glass-bg: rgba(20, 24, 31, 0.92);
+  --glass-sidebar-bg: rgba(20, 24, 31, 0.96);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --surface-bg: #18181c;
+  --surface-muted: #1f1f24;
+  --surface-elevated: #27272d;
   --text-primary: var(--palette-4);
-  --text-muted: var(--palette-3);
-  --border-subtle: color-mix(in srgb, var(--palette-2) 50%, transparent);
+  --text-muted: color-mix(in srgb, var(--palette-3) 88%, var(--palette-4));
+  --border-subtle: color-mix(in srgb, var(--palette-2) 50%, var(--palette-1));
   --accent: var(--palette-3);
   --accent-strong: var(--palette-4);
   --color-on-accent: var(--palette-1);
@@ -148,7 +150,7 @@ html.dark-purple {
   --type-article-strong: var(--palette-3);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 25%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, transparent);
   --selection-color: #ffffff;
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, transparent);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, transparent);
@@ -173,33 +175,33 @@ html.dark-purple {
 
 /* --- 2. 不摆蓝 (Blue) 5色: 深青灰、中深、中蓝灰、淡玫瑰紫、极浅蓝 --- */
 html.light-blue {
-  --palette-1: #325969;
-  --palette-2: #4E7A8A;
-  --palette-3: #6C8FA9;
-  --palette-4: #C8ADCA;
-  --palette-5: #CDDAE7;
-  --surface-bg: var(--palette-5);
-  --surface-muted: color-mix(in srgb, var(--palette-4) 70%, var(--palette-5));
-  --surface-elevated: var(--palette-5);
+  --palette-1: #2f4b57;
+  --palette-2: #4f6d7a;
+  --palette-3: #6f8fa0;
+  --palette-4: #c9d3da;
+  --palette-5: #f3f6f8;
+  --surface-bg: #ffffff;
+  --surface-muted: #ffffff;
+  --surface-elevated: #ffffff;
   --text-primary: var(--palette-1);
-  --text-muted: var(--palette-2);
-  --border-subtle: color-mix(in srgb, var(--palette-3) 50%, var(--palette-4));
+  --text-muted: color-mix(in srgb, var(--palette-2) 95%, var(--palette-3));
+  --border-subtle: color-mix(in srgb, var(--palette-3) 55%, var(--palette-4));
   --accent: var(--palette-3);
   --accent-strong: var(--palette-1);
   --color-on-accent: var(--palette-5);
-  --aurora-1: color-mix(in srgb, var(--palette-3) 25%, transparent);
-  --aurora-2: color-mix(in srgb, var(--palette-4) 20%, transparent);
-  --aurora-3: color-mix(in srgb, var(--palette-1) 15%, transparent);
+  --aurora-1: color-mix(in srgb, var(--palette-3) 22%, transparent);
+  --aurora-2: color-mix(in srgb, var(--palette-4) 18%, transparent);
+  --aurora-3: color-mix(in srgb, var(--palette-1) 12%, transparent);
   --danger: #ef4444;
   --danger-soft: color-mix(in srgb, var(--danger) 8%, transparent);
-  --color-success: #10b981;
-  --color-info: #3b82f6;
+  --color-success: color-mix(in srgb, #10b981 60%, var(--palette-2));
+  --color-info: color-mix(in srgb, #3b82f6 55%, var(--palette-2));
   --color-warning: #f59e0b;
   --type-article: var(--palette-2);
   --type-article-strong: var(--palette-1);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 15%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 16%, transparent);
   --selection-color: var(--text-primary);
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, white);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, white);
@@ -223,37 +225,37 @@ html.light-blue {
 }
 
 html.dark-blue {
-  --palette-1: #325969;
-  --palette-2: #4E7A8A;
-  --palette-3: #6C8FA9;
-  --palette-4: #C8ADCA;
-  --palette-5: #CDDAE7;
-  --glass-bg: rgba(18, 32, 42, 0.7);
-  --glass-sidebar-bg: rgba(18, 32, 42, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --surface-bg: color-mix(in srgb, var(--palette-1) 80%, black);
-  --surface-muted: color-mix(in srgb, var(--palette-1) 65%, black);
-  --surface-elevated: color-mix(in srgb, var(--palette-2) 55%, black);
-  --text-primary: var(--palette-5);
-  --text-muted: var(--palette-3);
-  --border-subtle: color-mix(in srgb, var(--palette-2) 45%, transparent);
-  --accent: var(--palette-3);
+  --palette-1: #2f4b57;
+  --palette-2: #4f6d7a;
+  --palette-3: #6f8fa0;
+  --palette-4: #c9d3da;
+  --palette-5: #f3f6f8;
+  --glass-bg: rgba(20, 24, 31, 0.92);
+  --glass-sidebar-bg: rgba(20, 24, 31, 0.96);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --surface-bg: #18191d;
+  --surface-muted: #1f2026;
+  --surface-elevated: #272933;
+  --text-primary: var(--palette-4);
+  --text-muted: color-mix(in srgb, var(--palette-3) 88%, var(--palette-4));
+  --border-subtle: color-mix(in srgb, var(--palette-2) 48%, var(--palette-1));
+  --accent: var(--palette-2);
   --accent-strong: var(--palette-4);
   --color-on-accent: var(--palette-1);
-  --aurora-1: color-mix(in srgb, var(--palette-3) 25%, transparent);
-  --aurora-2: color-mix(in srgb, var(--palette-1) 30%, transparent);
-  --aurora-3: color-mix(in srgb, var(--palette-2) 20%, transparent);
+  --aurora-1: color-mix(in srgb, var(--palette-3) 16%, transparent);
+  --aurora-2: color-mix(in srgb, var(--palette-1) 20%, transparent);
+  --aurora-3: color-mix(in srgb, var(--palette-2) 14%, transparent);
   --danger: #f87171;
   --danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
-  --color-success: #34d399;
-  --color-info: #60a5fa;
+  --color-success: color-mix(in srgb, #10b981 55%, var(--palette-2));
+  --color-info: color-mix(in srgb, #3b82f6 50%, var(--palette-2));
   --color-warning: #fbbf24;
   --type-article: var(--palette-4);
   --type-article-strong: var(--palette-3);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 25%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, transparent);
   --selection-color: #ffffff;
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, transparent);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, transparent);
@@ -278,33 +280,33 @@ html.dark-blue {
 
 /* --- 3. 不蕉绿 (Morandi Green) 5色: 深绿、中绿、浅绿、米黄、极浅 --- */
 html.light-green-morandi {
-  --palette-1: #566C44;
-  --palette-2: #688857;
-  --palette-3: #7A9B65;
-  --palette-4: #A7C190;
-  --palette-5: #FAF2CB;
-  --surface-bg: var(--palette-5);
-  --surface-muted: color-mix(in srgb, var(--palette-4) 75%, var(--palette-5));
-  --surface-elevated: var(--palette-5);
+  --palette-1: #4f5f44;
+  --palette-2: #6a7b5c;
+  --palette-3: #879a74;
+  --palette-4: #c7d2bb;
+  --palette-5: #f4f6ef;
+  --surface-bg: #ffffff;
+  --surface-muted: #ffffff;
+  --surface-elevated: #ffffff;
   --text-primary: var(--palette-1);
-  --text-muted: var(--palette-2);
-  --border-subtle: color-mix(in srgb, var(--palette-3) 55%, var(--palette-4));
+  --text-muted: color-mix(in srgb, var(--palette-2) 95%, var(--palette-3));
+  --border-subtle: color-mix(in srgb, var(--palette-3) 60%, var(--palette-4));
   --accent: var(--palette-2);
   --accent-strong: var(--palette-1);
   --color-on-accent: var(--palette-5);
-  --aurora-1: color-mix(in srgb, var(--palette-4) 25%, transparent);
-  --aurora-2: color-mix(in srgb, var(--palette-2) 20%, transparent);
-  --aurora-3: color-mix(in srgb, var(--palette-1) 15%, transparent);
+  --aurora-1: color-mix(in srgb, var(--palette-4) 22%, transparent);
+  --aurora-2: color-mix(in srgb, var(--palette-2) 18%, transparent);
+  --aurora-3: color-mix(in srgb, var(--palette-1) 12%, transparent);
   --danger: #ef4444;
   --danger-soft: color-mix(in srgb, var(--danger) 8%, transparent);
-  --color-success: #10b981;
-  --color-info: #3b82f6;
+  --color-success: color-mix(in srgb, #10b981 60%, var(--palette-2));
+  --color-info: color-mix(in srgb, #3b82f6 50%, var(--palette-2));
   --color-warning: #f59e0b;
   --type-article: var(--palette-2);
   --type-article-strong: var(--palette-1);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 15%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 16%, transparent);
   --selection-color: var(--text-primary);
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, white);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, white);
@@ -328,37 +330,37 @@ html.light-green-morandi {
 }
 
 html.dark-green-morandi {
-  --palette-1: #566C44;
-  --palette-2: #688857;
-  --palette-3: #7A9B65;
-  --palette-4: #A7C190;
-  --palette-5: #FAF2CB;
-  --glass-bg: rgba(28, 36, 24, 0.7);
-  --glass-sidebar-bg: rgba(28, 36, 24, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --surface-bg: color-mix(in srgb, var(--palette-1) 85%, black);
-  --surface-muted: color-mix(in srgb, var(--palette-1) 65%, black);
-  --surface-elevated: color-mix(in srgb, var(--palette-2) 55%, black);
-  --text-primary: var(--palette-5);
-  --text-muted: var(--palette-4);
-  --border-subtle: color-mix(in srgb, var(--palette-2) 45%, transparent);
+  --palette-1: #4f5f44;
+  --palette-2: #6a7b5c;
+  --palette-3: #879a74;
+  --palette-4: #c7d2bb;
+  --palette-5: #f4f6ef;
+  --glass-bg: rgba(20, 24, 31, 0.92);
+  --glass-sidebar-bg: rgba(20, 24, 31, 0.96);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --surface-bg: #181716;
+  --surface-muted: #1f1d1b;
+  --surface-elevated: #272422;
+  --text-primary: var(--palette-4);
+  --text-muted: color-mix(in srgb, var(--palette-3) 88%, var(--palette-4));
+  --border-subtle: color-mix(in srgb, var(--palette-2) 48%, var(--palette-1));
   --accent: var(--palette-2);
   --accent-strong: var(--palette-4);
   --color-on-accent: var(--palette-1);
-  --aurora-1: color-mix(in srgb, var(--palette-4) 25%, transparent);
-  --aurora-2: color-mix(in srgb, var(--palette-1) 30%, transparent);
-  --aurora-3: color-mix(in srgb, var(--palette-2) 20%, transparent);
+  --aurora-1: color-mix(in srgb, var(--palette-4) 16%, transparent);
+  --aurora-2: color-mix(in srgb, var(--palette-1) 20%, transparent);
+  --aurora-3: color-mix(in srgb, var(--palette-2) 14%, transparent);
   --danger: #f87171;
   --danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
-  --color-success: #34d399;
-  --color-info: #60a5fa;
+  --color-success: color-mix(in srgb, #10b981 55%, var(--palette-2));
+  --color-info: color-mix(in srgb, #3b82f6 50%, var(--palette-2));
   --color-warning: #fbbf24;
-  --type-article: #4ade80;
+  --type-article: var(--palette-4);
   --type-article-strong: var(--palette-4);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 25%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, transparent);
   --selection-color: #ffffff;
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, transparent);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, transparent);
@@ -388,18 +390,18 @@ html.light-green-fresh {
   --palette-3: #A6EDF6;
   --palette-4: #C5E8E2;
   --palette-5: #E9F3F8;
-  --surface-bg: var(--palette-5);
-  --surface-muted: var(--palette-4);
+  --surface-bg: #ffffff;
+  --surface-muted: #ffffff;
   --surface-elevated: #ffffff;
   --text-primary: var(--palette-1);
-  --text-muted: #4d8f72;
-  --border-subtle: #9dd4e0;
+  --text-muted: color-mix(in srgb, var(--palette-2) 92%, var(--palette-1));
+  --border-subtle: color-mix(in srgb, var(--palette-3) 60%, var(--palette-4));
   --accent: var(--palette-1);
-  --accent-strong: #2d5a4a;
+  --accent-strong: color-mix(in srgb, var(--palette-1) 90%, var(--palette-2));
   --color-on-accent: #ffffff;
-  --aurora-1: rgba(166, 237, 246, 0.35);
-  --aurora-2: rgba(65, 122, 100, 0.2);
-  --aurora-3: rgba(45, 90, 74, 0.15);
+  --aurora-1: color-mix(in srgb, var(--palette-3) 28%, transparent);
+  --aurora-2: color-mix(in srgb, var(--palette-1) 18%, transparent);
+  --aurora-3: color-mix(in srgb, var(--palette-2) 14%, transparent);
   --danger: #ef4444;
   --danger-soft: color-mix(in srgb, var(--danger) 8%, transparent);
   --color-success: #10b981;
@@ -409,7 +411,7 @@ html.light-green-fresh {
   --type-article-strong: var(--palette-1);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 15%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 16%, transparent);
   --selection-color: var(--text-primary);
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, white);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, white);
@@ -438,22 +440,22 @@ html.dark-green-fresh {
   --palette-3: #A6EDF6;
   --palette-4: #C5E8E2;
   --palette-5: #E9F3F8;
-  --glass-bg: rgba(18, 38, 30, 0.7);
-  --glass-sidebar-bg: rgba(18, 38, 30, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --surface-bg: #12261e;
-  --surface-muted: #1e3d30;
-  --surface-elevated: #2a4a3a;
+  --glass-bg: rgba(20, 24, 31, 0.92);
+  --glass-sidebar-bg: rgba(20, 24, 31, 0.96);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --surface-bg: #181a18;
+  --surface-muted: #1f221f;
+  --surface-elevated: #272c27;
   --text-primary: var(--palette-5);
-  --text-muted: #7bc4b8;
-  --border-subtle: #2d4a3d;
-  --accent: #5a9d82;
+  --text-muted: color-mix(in srgb, var(--palette-2) 82%, var(--palette-4));
+  --border-subtle: color-mix(in srgb, var(--palette-1) 58%, var(--palette-2));
+  --accent: color-mix(in srgb, var(--palette-2) 85%, var(--palette-1));
   --accent-strong: var(--palette-3);
   --color-on-accent: #12261e;
-  --aurora-1: rgba(65, 122, 100, 0.25);
-  --aurora-2: rgba(166, 237, 246, 0.15);
-  --aurora-3: rgba(18, 38, 30, 0.2);
+  --aurora-1: color-mix(in srgb, var(--palette-1) 22%, transparent);
+  --aurora-2: color-mix(in srgb, var(--palette-3) 14%, transparent);
+  --aurora-3: color-mix(in srgb, var(--palette-1) 28%, transparent);
   --danger: #f87171;
   --danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
   --color-success: #34d399;
@@ -463,7 +465,7 @@ html.dark-green-fresh {
   --type-article-strong: var(--palette-3);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 25%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, transparent);
   --selection-color: #ffffff;
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, transparent);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, transparent);
@@ -493,12 +495,12 @@ html.light-brown {
   --palette-3: #D4A574;
   --palette-4: #F5EDE4;
   --palette-5: #FFFBF7;
-  --surface-bg: var(--palette-5);
-  --surface-muted: var(--palette-4);
-  --surface-elevated: var(--palette-5);
+  --surface-bg: #ffffff;
+  --surface-muted: #ffffff;
+  --surface-elevated: #ffffff;
   --text-primary: var(--palette-1);
-  --text-muted: var(--palette-2);
-  --border-subtle: color-mix(in srgb, var(--palette-3) 55%, var(--palette-4));
+  --text-muted: color-mix(in srgb, var(--palette-2) 95%, var(--palette-3));
+  --border-subtle: color-mix(in srgb, var(--palette-3) 60%, var(--palette-4));
   --accent: var(--palette-2);
   --accent-strong: var(--palette-1);
   --color-on-accent: var(--palette-5);
@@ -514,7 +516,7 @@ html.light-brown {
   --type-article-strong: var(--palette-1);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 15%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 16%, transparent);
   --selection-color: var(--text-primary);
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, white);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, white);
@@ -543,16 +545,16 @@ html.dark-brown {
   --palette-3: #D4A574;
   --palette-4: #F5EDE4;
   --palette-5: #FFFBF7;
-  --glass-bg: rgba(38, 28, 18, 0.7);
-  --glass-sidebar-bg: rgba(38, 28, 18, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --surface-bg: color-mix(in srgb, var(--palette-1) 80%, black);
-  --surface-muted: color-mix(in srgb, var(--palette-1) 60%, black);
-  --surface-elevated: color-mix(in srgb, var(--palette-2) 50%, black);
+  --glass-bg: rgba(20, 24, 31, 0.92);
+  --glass-sidebar-bg: rgba(20, 24, 31, 0.96);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --surface-bg: #181615;
+  --surface-muted: #1f1c1b;
+  --surface-elevated: #272422;
   --text-primary: var(--palette-4);
-  --text-muted: var(--palette-3);
-  --border-subtle: color-mix(in srgb, var(--palette-2) 45%, transparent);
+  --text-muted: color-mix(in srgb, var(--palette-3) 88%, var(--palette-4));
+  --border-subtle: color-mix(in srgb, var(--palette-2) 50%, var(--palette-1));
   --accent: var(--palette-3);
   --accent-strong: var(--palette-4);
   --color-on-accent: var(--palette-1);
@@ -568,7 +570,7 @@ html.dark-brown {
   --type-article-strong: var(--palette-4);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 25%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, transparent);
   --selection-color: #ffffff;
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, transparent);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, transparent);
@@ -598,12 +600,12 @@ html.light-red {
   --palette-3: #ECAE89;
   --palette-4: #F0D4CC;
   --palette-5: #EFECEC;
-  --surface-bg: var(--palette-5);
-  --surface-muted: var(--palette-4);
-  --surface-elevated: var(--palette-5);
+  --surface-bg: #ffffff;
+  --surface-muted: #ffffff;
+  --surface-elevated: #ffffff;
   --text-primary: var(--palette-1);
-  --text-muted: var(--palette-2);
-  --border-subtle: color-mix(in srgb, var(--palette-3) 55%, var(--palette-4));
+  --text-muted: color-mix(in srgb, var(--palette-2) 95%, var(--palette-3));
+  --border-subtle: color-mix(in srgb, var(--palette-3) 60%, var(--palette-4));
   --accent: var(--palette-2);
   --accent-strong: var(--palette-1);
   --color-on-accent: var(--palette-5);
@@ -619,7 +621,7 @@ html.light-red {
   --type-article-strong: var(--palette-1);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 15%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 16%, transparent);
   --selection-color: var(--text-primary);
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, white);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, white);
@@ -648,16 +650,16 @@ html.dark-red {
   --palette-3: #ECAE89;
   --palette-4: #F0D4CC;
   --palette-5: #EFECEC;
-  --glass-bg: rgba(45, 22, 26, 0.7);
-  --glass-sidebar-bg: rgba(45, 22, 26, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --surface-bg: color-mix(in srgb, var(--palette-1) 80%, black);
-  --surface-muted: color-mix(in srgb, var(--palette-1) 60%, black);
-  --surface-elevated: color-mix(in srgb, var(--palette-2) 50%, black);
+  --glass-bg: rgba(20, 24, 31, 0.92);
+  --glass-sidebar-bg: rgba(20, 24, 31, 0.96);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --surface-bg: #181616;
+  --surface-muted: #1f1c1c;
+  --surface-elevated: #272424;
   --text-primary: var(--palette-4);
-  --text-muted: var(--palette-3);
-  --border-subtle: color-mix(in srgb, var(--palette-2) 45%, transparent);
+  --text-muted: color-mix(in srgb, var(--palette-3) 88%, var(--palette-4));
+  --border-subtle: color-mix(in srgb, var(--palette-2) 50%, var(--palette-1));
   --accent: var(--palette-2);
   --accent-strong: var(--palette-4);
   --color-on-accent: var(--palette-1);
@@ -673,7 +675,7 @@ html.dark-red {
   --type-article-strong: var(--palette-4);
   --type-quick: var(--accent);
   --type-quick-strong: var(--accent-strong);
-  --selection-bg: color-mix(in srgb, var(--accent) 25%, transparent);
+  --selection-bg: color-mix(in srgb, var(--accent) 28%, transparent);
   --selection-color: #ffffff;
   --type-article-light: color-mix(in srgb, var(--type-article) 40%, transparent);
   --type-article-lighter: color-mix(in srgb, var(--type-article) 20%, transparent);
@@ -694,4 +696,21 @@ html.dark-red {
   --color-warning-lighter: color-mix(in srgb, var(--color-warning) 20%, transparent);
   --color-warning-bg: linear-gradient(135deg, color-mix(in srgb, var(--color-warning) 15%, transparent), color-mix(in srgb, var(--color-warning) 22%, transparent));
   --color-danger-bg: linear-gradient(135deg, color-mix(in srgb, var(--danger) 15%, transparent), color-mix(in srgb, var(--danger) 22%, transparent));
+}
+
+/* =========================================
+   Dark Theme Harmonization (Neutral & Warm)
+   ========================================= */
+html[class^="dark-"] {
+  --surface-bg: color-mix(in srgb, var(--surface-bg) 92%, #0b0b0c);
+  --surface-muted: color-mix(in srgb, var(--surface-muted) 92%, #0b0b0c);
+  --surface-elevated: color-mix(in srgb, var(--surface-elevated) 92%, #0f0f10);
+  --border-subtle: color-mix(in srgb, var(--border-subtle) 85%, var(--palette-2));
+  --accent: color-mix(in srgb, var(--accent) 88%, var(--palette-2));
+  --accent-strong: color-mix(in srgb, var(--accent-strong) 92%, var(--palette-2));
+  --text-muted: color-mix(in srgb, var(--text-muted) 86%, var(--palette-4));
+  --color-success: color-mix(in srgb, var(--color-success) 78%, var(--palette-2));
+  --color-info: color-mix(in srgb, var(--color-info) 78%, var(--palette-2));
+  --type-article: color-mix(in srgb, var(--type-article) 82%, var(--palette-2));
+  --type-quick: color-mix(in srgb, var(--type-quick) 82%, var(--palette-2));
 }

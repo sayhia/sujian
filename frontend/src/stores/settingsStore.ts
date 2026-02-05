@@ -6,6 +6,15 @@ export type Theme = 'light' | 'dark' | 'system';
 export type FontSize = 'small' | 'medium' | 'large';
 export type TimeFormat = '24h' | '12h';
 export type Language = 'zh' | 'en' | 'ja' | 'ko';
+export type ToolbarStyle = 'default' | 'glass' | 'tiny';
+export type ToolbarPosition = 'top' | 'following' | 'fixed';
+export type ToolbarLayout = 'full' | 'center';
+export type ToolbarAppearance = {
+  backgroundColor?: string;
+  iconColor?: string;
+  iconSize?: number;
+};
+export type ToolbarAppearanceByStyle = Partial<Record<ToolbarPosition, ToolbarAppearance>>;
 
 // 新主题风格：与 theme.css 中的 html.className 对应（六张图片配色：绝绝紫、不摆蓝、不蕉绿、放青松、糖太棕、发财红）
 export type DarkThemeStyle =
@@ -68,6 +77,18 @@ interface Settings {
   darkThemeStyle: DarkThemeStyle;
   lightThemeStyle: LightThemeStyle;
   themePack: ThemePack;
+  toolbarStyle: ToolbarStyle;
+  toolbarPosition: ToolbarPosition;
+  toolbarAutohide: boolean;
+  toolbarMultipleConfig: boolean;
+  toolbarAppearanceStyle: ToolbarPosition;
+  toolbarAppearanceByStyle: ToolbarAppearanceByStyle;
+  toolbarFixedOffsetX: number;
+  toolbarFixedOffsetY: number;
+  toolbarLayout: ToolbarLayout;
+  toolbarBackgroundColor: string;
+  toolbarIconColor: string;
+  toolbarIconSize: number;
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -83,11 +104,30 @@ export const useSettingsStore = defineStore('settings', () => {
     darkThemeStyle: 'dark-purple',
     lightThemeStyle: 'light-purple',
     themePack: 'purple',
+    toolbarStyle: 'default',
+    toolbarPosition: 'top',
+    toolbarAutohide: false,
+    toolbarMultipleConfig: false,
+    toolbarAppearanceStyle: 'top',
+    toolbarAppearanceByStyle: {
+      top: {},
+      following: {},
+      fixed: {},
+    },
+    toolbarFixedOffsetX: 0,
+    toolbarFixedOffsetY: 0,
+    toolbarLayout: 'full',
+    toolbarBackgroundColor: '',
+    toolbarIconColor: '',
+    toolbarIconSize: 18,
   });
 
   const validThemePacks: ThemePack[] = ['purple', 'blue', 'greenMorandi', 'greenFresh', 'brown', 'red'];
   const validLightStyles: LightThemeStyle[] = ['light-purple', 'light-blue', 'light-green-morandi', 'light-green-fresh', 'light-brown', 'light-red'];
   const validDarkStyles: DarkThemeStyle[] = ['dark-purple', 'dark-blue', 'dark-green-morandi', 'dark-green-fresh', 'dark-brown', 'dark-red'];
+  const validToolbarStyles: ToolbarStyle[] = ['default', 'glass', 'tiny'];
+  const validToolbarPositions: ToolbarPosition[] = ['top', 'following', 'fixed'];
+  const validToolbarLayouts: ToolbarLayout[] = ['full', 'center'];
 
   // Load settings from localStorage
   function loadSettings() {
@@ -117,6 +157,57 @@ export const useSettingsStore = defineStore('settings', () => {
           const mapping = themePackMap[settings.value.themePack];
           settings.value.darkThemeStyle = mapping.dark;
         }
+        if (!validToolbarStyles.includes(settings.value.toolbarStyle)) {
+          const legacyStyle = localStorage.getItem('markdown-toolbar-style');
+          if (legacyStyle === 'default' || legacyStyle === 'glass' || legacyStyle === 'tiny') {
+            settings.value.toolbarStyle = legacyStyle;
+          } else {
+            settings.value.toolbarStyle = 'default';
+          }
+        }
+        if (!validToolbarPositions.includes(settings.value.toolbarPosition)) {
+          const legacyPosition = localStorage.getItem('markdown-toolbar-position');
+          if (legacyPosition === 'top' || legacyPosition === 'following' || legacyPosition === 'fixed') {
+            settings.value.toolbarPosition = legacyPosition;
+          } else {
+            settings.value.toolbarPosition = 'top';
+          }
+        }
+        if (typeof settings.value.toolbarAutohide !== 'boolean') {
+          const legacyAutohide = localStorage.getItem('markdown-toolbar-autohide');
+          if (legacyAutohide === 'true' || legacyAutohide === 'false') {
+            settings.value.toolbarAutohide = legacyAutohide === 'true';
+          } else {
+            settings.value.toolbarAutohide = false;
+          }
+        }
+        if (typeof settings.value.toolbarMultipleConfig !== 'boolean') {
+          settings.value.toolbarMultipleConfig = false;
+        }
+        if (!validToolbarLayouts.includes(settings.value.toolbarLayout)) {
+          settings.value.toolbarLayout = 'full';
+        }
+        if (!validToolbarPositions.includes(settings.value.toolbarAppearanceStyle)) {
+          settings.value.toolbarAppearanceStyle = settings.value.toolbarPosition ?? 'top';
+        }
+        settings.value.toolbarAppearanceByStyle = normalizeAppearanceByStyle(
+          settings.value.toolbarAppearanceByStyle,
+        );
+        if (typeof settings.value.toolbarFixedOffsetX !== 'number' || Number.isNaN(settings.value.toolbarFixedOffsetX)) {
+          settings.value.toolbarFixedOffsetX = 0;
+        }
+        if (typeof settings.value.toolbarFixedOffsetY !== 'number' || Number.isNaN(settings.value.toolbarFixedOffsetY)) {
+          settings.value.toolbarFixedOffsetY = 0;
+        }
+        if (typeof settings.value.toolbarBackgroundColor !== 'string') {
+          settings.value.toolbarBackgroundColor = '';
+        }
+        if (typeof settings.value.toolbarIconColor !== 'string') {
+          settings.value.toolbarIconColor = '';
+        }
+        if (typeof settings.value.toolbarIconSize !== 'number' || Number.isNaN(settings.value.toolbarIconSize)) {
+          settings.value.toolbarIconSize = 18;
+        }
       } catch (e) {
         console.error('Failed to load settings:', e);
       }
@@ -135,6 +226,34 @@ export const useSettingsStore = defineStore('settings', () => {
       }
     }
     return null;
+  }
+
+  function normalizeAppearanceByStyle(
+    value: ToolbarAppearanceByStyle | undefined,
+  ): ToolbarAppearanceByStyle {
+    if (!value || typeof value !== 'object') {
+      return { top: {}, following: {}, fixed: {} };
+    }
+    const nextAppearance: ToolbarAppearanceByStyle = {};
+    validToolbarPositions.forEach((style) => {
+      const bucket = value[style];
+      if (!bucket || typeof bucket !== 'object') {
+        nextAppearance[style] = {};
+        return;
+      }
+      const cleaned: ToolbarAppearance = {};
+      if (typeof bucket.backgroundColor === 'string') {
+        cleaned.backgroundColor = bucket.backgroundColor;
+      }
+      if (typeof bucket.iconColor === 'string') {
+        cleaned.iconColor = bucket.iconColor;
+      }
+      if (typeof bucket.iconSize === 'number' && !Number.isNaN(bucket.iconSize)) {
+        cleaned.iconSize = Math.max(12, Math.min(28, Math.round(bucket.iconSize)));
+      }
+      nextAppearance[style] = cleaned;
+    });
+    return nextAppearance;
   }
 
   // Save settings to localStorage
@@ -259,6 +378,90 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings();
   }
 
+  function setToolbarStyle(style: ToolbarStyle) {
+    settings.value.toolbarStyle = style;
+    saveSettings();
+  }
+
+  function setToolbarPosition(position: ToolbarPosition) {
+    settings.value.toolbarPosition = position;
+    saveSettings();
+  }
+
+  function setToolbarAutohide(value: boolean) {
+    settings.value.toolbarAutohide = value;
+    saveSettings();
+  }
+
+  function setToolbarMultipleConfig(value: boolean) {
+    settings.value.toolbarMultipleConfig = value;
+    saveSettings();
+  }
+
+  function setToolbarAppearanceStyle(style: ToolbarPosition) {
+    settings.value.toolbarAppearanceStyle = style;
+    saveSettings();
+  }
+
+  function setToolbarAppearanceValue(style: ToolbarPosition, patch: Partial<ToolbarAppearance>) {
+    const current = settings.value.toolbarAppearanceByStyle ?? {};
+    const bucket: ToolbarAppearance = { ...(current[style] ?? {}) };
+    if (patch.backgroundColor !== undefined) {
+      bucket.backgroundColor = patch.backgroundColor;
+    }
+    if (patch.iconColor !== undefined) {
+      bucket.iconColor = patch.iconColor;
+    }
+    if (patch.iconSize !== undefined) {
+      bucket.iconSize = Math.max(12, Math.min(28, Math.round(patch.iconSize)));
+    }
+    settings.value.toolbarAppearanceByStyle = { ...current, [style]: bucket };
+    saveSettings();
+  }
+
+  function setToolbarAppearanceByStyle(value: ToolbarAppearanceByStyle) {
+    settings.value.toolbarAppearanceByStyle = normalizeAppearanceByStyle(value);
+    saveSettings();
+  }
+
+  function clearToolbarAppearanceValue(style: ToolbarPosition, key: keyof ToolbarAppearance) {
+    const current = settings.value.toolbarAppearanceByStyle ?? {};
+    const bucket: ToolbarAppearance = { ...(current[style] ?? {}) };
+    delete bucket[key];
+    settings.value.toolbarAppearanceByStyle = { ...current, [style]: bucket };
+    saveSettings();
+  }
+
+  function setToolbarFixedOffsetX(value: number) {
+    settings.value.toolbarFixedOffsetX = Math.max(-240, Math.min(240, Math.round(value)));
+    saveSettings();
+  }
+
+  function setToolbarFixedOffsetY(value: number) {
+    settings.value.toolbarFixedOffsetY = Math.max(-240, Math.min(240, Math.round(value)));
+    saveSettings();
+  }
+
+  function setToolbarLayout(layout: ToolbarLayout) {
+    settings.value.toolbarLayout = layout;
+    saveSettings();
+  }
+
+  function setToolbarBackgroundColor(color: string) {
+    settings.value.toolbarBackgroundColor = color;
+    saveSettings();
+  }
+
+  function setToolbarIconColor(color: string) {
+    settings.value.toolbarIconColor = color;
+    saveSettings();
+  }
+
+  function setToolbarIconSize(size: number) {
+    settings.value.toolbarIconSize = Math.max(12, Math.min(28, Math.round(size)));
+    saveSettings();
+  }
+
   // Computed
   const effectiveTheme = computed(() => {
     if (settings.value.theme === 'system') {
@@ -293,6 +496,20 @@ export const useSettingsStore = defineStore('settings', () => {
     setLightThemeStyle,
     setDarkThemeStyle,
     setThemePack,
+    setToolbarStyle,
+    setToolbarPosition,
+    setToolbarAutohide,
+    setToolbarMultipleConfig,
+    setToolbarAppearanceStyle,
+    setToolbarAppearanceValue,
+    setToolbarAppearanceByStyle,
+    clearToolbarAppearanceValue,
+    setToolbarFixedOffsetX,
+    setToolbarFixedOffsetY,
+    setToolbarLayout,
+    setToolbarBackgroundColor,
+    setToolbarIconColor,
+    setToolbarIconSize,
     loadSettings,
     saveSettings,
   };

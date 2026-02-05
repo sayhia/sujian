@@ -203,11 +203,9 @@ defineExpose({ addToast, removeToast, clearAll });
   gap: 14px;
   padding: 18px 20px;
   border-radius: var(--radius-xl);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow-xl), var(--glass-shadow);
-  border: var(--glass-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border-subtle);
   transition: all 0.3s var(--ease-spring);
   cursor: pointer;
   will-change: transform, box-shadow;
@@ -229,9 +227,8 @@ defineExpose({ addToast, removeToast, clearAll });
 }
 
 .toast:hover {
-  transform: translateX(-8px) scale(1.03);
-  box-shadow: 0 16px 56px color-mix(in srgb, var(--text-primary) 25%, transparent),
-              0 6px 16px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-lg), var(--shadow-inset-soft);
   border-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 
@@ -254,9 +251,9 @@ defineExpose({ addToast, removeToast, clearAll });
 }
 
 .toast:hover .toast-icon {
-  transform: scale(1.1) rotate(5deg);
+  transform: none;
   background: color-mix(in srgb, var(--color-surface) 95%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 8%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 .icon {
@@ -324,18 +321,18 @@ defineExpose({ addToast, removeToast, clearAll });
 }
 
 .toast-undo-btn:hover {
-  transform: translateY(-1px) scale(1.02);
+  transform: none;
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--color-accent) 20%, transparent),
     color-mix(in srgb, var(--color-accent-strong) 15%, transparent)
   );
   border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 .toast-undo-btn:active {
-  transform: translateY(0) scale(0.98);
+  transform: none;
   transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -365,12 +362,12 @@ defineExpose({ addToast, removeToast, clearAll });
 .toast-close:hover {
   background: color-mix(in srgb, var(--text-primary) 10%, var(--color-surface));
   border-color: var(--color-border-subtle);
-  transform: scale(1.12) rotate(90deg);
-  box-shadow: 0 3px 8px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .toast-close:active {
-  transform: scale(0.92) rotate(90deg);
+  transform: none;
   background: color-mix(in srgb, var(--text-primary) 12%, var(--color-surface));
   transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }

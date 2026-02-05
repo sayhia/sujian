@@ -37,11 +37,9 @@
 }
 
 .modal-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow), var(--shadow-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-xl);
   border-radius: var(--radius-2xl);
   padding: 32px;
   width: 100%;
@@ -166,10 +164,8 @@
 }
 
 .article-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-2xl);
   border-radius: var(--radius-2xl);
   width: 100%;
@@ -213,10 +209,8 @@
   max-width: 600px;
   height: 100vh;
   pointer-events: auto;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-left: 1px solid var(--glass-border);
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-2xl);
 }
 
@@ -252,10 +246,8 @@
 }
 
 .dialog-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-xl);
   border-radius: var(--radius-2xl);
   padding: 32px;
@@ -370,13 +362,13 @@
   );
   border-color: color-mix(in srgb, var(--color-palette-2) 55%, transparent);
   color: var(--color-palette-1);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-palette-2) 20%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-palette-1) 8%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-sm);
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--color-palette-3) 20%, transparent),
@@ -396,14 +388,14 @@
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-palette-2) 40%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-md);
   filter: brightness(1.05);
 }
 
 .btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-palette-2) 30%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-danger {
@@ -414,14 +406,14 @@
 }
 
 .btn-danger:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-danger) 40%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-md);
   filter: brightness(1.05);
 }
 
 .btn-danger:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-danger) 30%, transparent);
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-icon {
