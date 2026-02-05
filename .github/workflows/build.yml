@@ -120,12 +120,13 @@ jobs:
 
     - name: Create archives (Windows)
       if: matrix.os == 'windows-latest'
+      shell: powershell
       run: |
         # Wails creates .exe on Windows
-        if [ -f "build/bin/panda-time-note.exe" ]; then
-          cd build/bin
+        if (Test-Path "build/bin/panda-time-note.exe") {
+          Set-Location build/bin
           7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
-        fi
+        }
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
