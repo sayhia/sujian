@@ -79,18 +79,17 @@ jobs:
     - name: Install Wails CLI
       run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
+    - name: Build Wails application (Debug help)
+      run: |
+        echo "Wails version:"
+        wails3 version
+        echo "Wails build help:"
+        wails3 build --help
+
     - name: Build Wails application
       run: |
-        if [ "${{ matrix.os }}" = "darwin-latest" ]; then
-          PLATFORM="darwin/${{ matrix.arch }}"
-        elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-          PLATFORM="windows/amd64"
-        else
-          PLATFORM="linux/amd64"
-        fi
-        
-        echo "Building for $PLATFORM"
-        wails3 build --clean --platform $PLATFORM --upx
+        # For now, try simple build without flags to see what works
+        wails3 build
 
     - name: Create archives (Linux/macOS)
       if: matrix.os != 'windows-latest'
