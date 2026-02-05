@@ -86,7 +86,10 @@ jobs:
         echo "Wails build help:"
         wails3 build --help
 
-    - name: Build Wails application
+    - name: Install Task
+      run: go install github.com/go-task/task/v3/cmd/task@latest
+
+    - name: Build application
       run: |
         # Check current directory and files
         echo "Current directory: $(pwd)"
@@ -96,13 +99,9 @@ jobs:
         # Clean previous builds
         rm -rf build/
         
-        # Show Wails help to understand available options
-        echo "Wails build help:"
-        wails3 build --help 2>&1 || echo "Help command failed"
-        
-        # Build without unsupported flags
-        echo "Starting Wails build..."
-        wails3 build
+        # Use Task to build (which is what Wails projects expect)
+        echo "Starting build with Task..."
+        task build
         
         # Check what was created
         echo "Build directory contents:"
