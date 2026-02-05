@@ -88,21 +88,75 @@ jobs:
 
     - name: Build Wails application
       run: |
-        # Build without any flags first
-        wails3 build
+        # Check current directory and files
+        echo "Current directory: $(pwd)"
+        echo "Files in current directory:"
+        ls -la
+        
+        # Clean previous builds
+        rm -rf build/
+        
+        # Build with verbose output
+        wails3 build -v
+        
+        # Check what was created
+        echo "Build directory contents:"
+        find . -name "build" -type d -exec ls -la {} \; 2>/dev/null || echo "No build directory found"
 
     - name: Create archives (Linux/macOS)
       if: matrix.os != 'windows-latest'
       run: |
-        # Find the built binaries
+        echo "Creating archive for ${{ matrix.os }}"
+        echo "Current directory: $(pwd)"
+        echo "Looking for build artifacts:"
+        find . -name "*.app" -o -name "panda-time-note" -o -name "*.exe" 2>/dev/null || echo "No artifacts found"
+        
+        # Try different possible locations
+        if [ -d "build/bin" ]; then
+          echo "Found build/bin directory"
+          ls -la build/bin/
+        fi
+        
+        if [ -d "build" ]; then
+          echo "Found build directory"
+          ls -la build/
+        fi
+        
+        # Find and create archives
         if [ "${{ matrix.os }}" = "darwin-latest" ]; then
-          # Wails creates .app bundles on macOS in build/bin
-          if [ "${{ matrix.arch }}" = "arm64" ]; then
-            # Create macOS ARM64 archive
-            if [ -d "build/bin/panda-time-note.app" ]; then
-              cd build/bin
-              tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
-            fi
+          # Look for .app in different locations
+          APP_PATH=""
+          if [ -d "build/bin/panda-time-note.app" ]; then
+            APP_PATH="build/bin/panda-time-note.app"
+          elif [ -d "build/panda-time-note.app" ]; then
+            APP_PATH="build/panda-time-note.app"
+          fi
+          
+          if [ -n "$APP_PATH" ]; then
+            echo "Found app at $APP_PATH"
+            cd "$(dirname "$APP_PATH")"
+            tar -czf "../../../${{ matrix.archive_name }}" "$(basename "$APP_PATH")"
+          else
+            echo "No .app found, creating archive from root"
+            tar -czf "${{ matrix.archive_name }}" * 2>/dev/null || echo "Archive creation failed"
+          fi
+        else
+          # Linux creates executable
+          EXE_PATH=""
+          if [ -f "build/bin/panda-time-note" ]; then
+            EXE_PATH="build/bin/panda-time-note"
+          elif [ -f "build/panda-time-note" ]; then
+            EXE_PATH="build/panda-time-note"
+          fi
+          
+          if [ -n "$EXE_PATH" ]; then
+            echo "Found executable at $EXE_PATH"
+            cd "$(dirname "$EXE_PATH")"
+            tar -czf "../../../${{ matrix.archive_name }}" "$(basename "$EXE_PATH")"
+          else
+            echo "No executable found"
+          fi
+        fi
           else
             # Create macOS Intel archive
             if [ -d "build/bin/panda-time-note.app" ]; then
@@ -123,16 +177,38 @@ jobs:
       shell: powershell
       run: |
         # Wails creates .exe on Windows
+        Write-Host "Looking for Windows executable..."
+        Get-ChildItem -Path . -Recurse -Name "*.exe" -ErrorAction SilentlyContinue
+        
+        # Check multiple possible locations
+        $exePath = ""
         if (Test-Path "build/bin/panda-time-note.exe") {
-          Set-Location build/bin
-          7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
+          $exePath = "build/bin/panda-time-note.exe"
+        } elseif (Test-Path "build/panda-time-note.exe") {
+          $exePath = "build/panda-time-note.exe"
+        }
+        
+        if ($exePath) {
+          Write-Host "Found executable at $exePath"
+          $dir = Split-Path $exePath -Parent
+          $file = Split-Path $exePath -Leaf
+          Set-Location $dir
+          7z a -tzip "../../${{ matrix.archive_name }}" $file
+        } else {
+          Write-Host "No executable found, trying to create archive from root"
+          7z a -tzip "${{ matrix.archive_name }}" * -r 2>$null
         }
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.archive_name }}
-        path: ${{ matrix.archive_name }}
+        path: |
+          ${{ matrix.archive_name }}
+          build/**/*
+          *.app
+          *.exe
+          panda-time-note
 
   release:
     name: Create Release
