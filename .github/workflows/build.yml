@@ -89,6 +89,31 @@ jobs:
     - name: Install Task
       run: go install github.com/go-task/task/v3/cmd/task@latest
 
+    - name: Create desktop-only Taskfile
+      run: |
+        echo "Creating temporary Taskfile..."
+        
+    - name: Create desktop-only Taskfile
+      run: |
+        # Create a temporary Taskfile that only includes desktop platforms
+        echo 'version: "3"' > Taskfile.tmp.yml
+        echo '' >> Taskfile.tmp.yml
+        echo 'includes:' >> Taskfile.tmp.yml
+        echo '  common: ./build/Taskfile.yml' >> Taskfile.tmp.yml
+        echo '  windows: ./build/windows/Taskfile.yml' >> Taskfile.tmp.yml
+        echo '  darwin: ./build/darwin/Taskfile.yml' >> Taskfile.tmp.yml
+        echo '  linux: ./build/linux/Taskfile.yml' >> Taskfile.tmp.yml
+        echo '' >> Taskfile.tmp.yml
+        echo 'vars:' >> Taskfile.tmp.yml
+        echo '  APP_NAME: "panda-time-note"' >> Taskfile.tmp.yml
+        echo '  BIN_DIR: "bin"' >> Taskfile.tmp.yml
+        echo '' >> Taskfile.tmp.yml
+        echo 'tasks:' >> Taskfile.tmp.yml
+        echo '  build:' >> Taskfile.tmp.yml
+        echo '    summary: Builds application' >> Taskfile.tmp.yml
+        echo '    cmds:' >> Taskfile.tmp.yml
+        echo '      - task: "{{OS}}:build"' >> Taskfile.tmp.yml
+        
     - name: Build application
       run: |
         # Check current directory and files
@@ -99,7 +124,7 @@ jobs:
         # Clean previous builds
         rm -rf build/
         
-        # Set the target OS for Task
+        # Set up target OS for Task
         if [ "${{ matrix.os }}" = "darwin-latest" ]; then
           export OS=darwin
         elif [ "${{ matrix.os }}" = "windows-latest" ]; then
@@ -110,9 +135,9 @@ jobs:
         
         echo "Building for OS=$OS"
         
-        # Use Task to build for specific platform
+        # Use temporary Taskfile with only desktop platforms
         echo "Starting build with Task..."
-        task $OS:build
+        task -t Taskfile.tmp.yml $OS:build
         
         # Check what was created
         echo "Build directory contents:"
