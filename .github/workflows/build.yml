@@ -88,32 +88,44 @@ jobs:
 
     - name: Build Wails application
       run: |
-        # Try with correct flag format based on error message
-        wails3 build clean
+        # Build without any flags first
+        wails3 build
 
     - name: Create archives (Linux/macOS)
       if: matrix.os != 'windows-latest'
       run: |
+        # Find the built binaries
         if [ "${{ matrix.os }}" = "darwin-latest" ]; then
-          # Wails creates .app bundles on macOS
-          cd build/bin
+          # Wails creates .app bundles on macOS in build/bin
           if [ "${{ matrix.arch }}" = "arm64" ]; then
-            tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+            # Create macOS ARM64 archive
+            if [ -d "build/bin/panda-time-note.app" ]; then
+              cd build/bin
+              tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+            fi
           else
-            tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+            # Create macOS Intel archive
+            if [ -d "build/bin/panda-time-note.app" ]; then
+              cd build/bin
+              tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+            fi
           fi
         else
           # Linux creates executable
-          cd build/bin
-          tar -czf "../../../${{ matrix.archive_name }}" panda-time-note
+          if [ -f "build/bin/panda-time-note" ]; then
+            cd build/bin
+            tar -czf "../../../${{ matrix.archive_name }}" panda-time-note
+          fi
         fi
 
     - name: Create archives (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         # Wails creates .exe on Windows
-        cd build/bin
-        7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
+        if [ -f "build/bin/panda-time-note.exe" ]; then
+          cd build/bin
+          7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
+        fi
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
