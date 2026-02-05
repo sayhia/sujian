@@ -1,4 +1,4 @@
-name: Cross-Platform Build
+name: Build + Test v3
 
 on:
   push:
@@ -9,9 +9,10 @@ on:
 
 jobs:
   build:
+    name: Build Application
     runs-on: ${{ matrix.os }}
-
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
@@ -26,150 +27,214 @@ jobs:
             arch: arm64
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.25' # Wails v3 requires Go 1.25+
+      - name: Install linux dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          packages: libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config xvfb x11-xserver-utils at-spi2-core xdg-desktop-portal-gtk
+          version: 1.0
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: "go.sum"
 
-    - name: Install Wails v3 CLI
-      run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Install dependencies (Linux only)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        # Install Wails v3 dependencies for Ubuntu
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          pkg-config \
-          libgtk-3-dev \
-          libwebkit2gtk-4.1-dev \
-          librsvg2-dev \
-          libpango1.0-dev \
-          libcairo2-dev \
-          libgdk-pixbuf2.0-dev \
-          libglib2.0-dev \
-          libjavascriptcoregtk-4.1-dev \
-          libatk1.0-dev \
-          libatspi2.0-dev \
-          libgtk-3-0 \
-          libgdk-pixbuf2.0-0 \
-          libpango-1.0-0 \
-          libcairo-gobject2 \
-          libgtksourceview-3.0-dev || \
-        sudo apt-get install -y \
-          build-essential \
-          pkg-config \
-          libgtk-3-dev \
-          libwebkit2gtk-4.0-dev \
-          librsvg2-dev \
-          libpango1.0-dev \
-          libcairo2-dev \
-          libgdk-pixbuf2.0-dev \
-          libglib2.0-dev \
-          libjavascriptcoregtk-4.0-dev \
-          libatk1.0-dev \
-          libatspi2.0-dev \
-          libgtk-3-0 \
-          libgdk-pixbuf2.0-0 \
-          libpango-1.0-0 \
-          libcairo-gobject2 \
-          libgtksourceview-3.0-dev
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install dependencies (macOS only)
-      if: matrix.os == 'macos-latest'
-      run: |
-        brew install upx
+      - name: Install Wails v3 CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
-    - name: Install dependencies (Windows only)
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install upx
+      - name: Install dependencies (macOS only)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install upx
 
-    - name: Build Wails application
-      run: wails3 build
+      - name: Install dependencies (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install upx
 
-    - name: Create archives
-      run: |
-        # Check what was built and create appropriate archives
-        if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          if [ -f "build/bin/panda-time-note.exe" ]; then
-            cd build/bin
-            7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
-          elif [ -f "bin/panda-time-note.exe" ]; then
-            cd bin
-            7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
+      - name: Build Wails application
+        run: wails3 build -platform ${{ matrix.os }}${{ matrix.arch && '/' + matrix.arch || '' }}
+
+      - name: Create archives
+        run: |
+          # Check what was built and create appropriate archives
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            if [ -f "build/bin/panda-time-note.exe" ]; then
+              cd build/bin
+              7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
+            elif [ -f "bin/panda-time-note.exe" ]; then
+              cd bin
+              7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
+            fi
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+            if [ -d "build/bin/panda-time-note.app" ]; then
+              cd build/bin
+              tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+            elif [ -d "bin/panda-time-note.app" ]; then
+              cd bin
+              tar -czf "../../${{ matrix.archive_name }}" panda-time-note.app
+            fi
+          else
+            # Linux
+            if [ -f "build/bin/panda-time-note" ]; then
+              cd build/bin
+              tar -czf "../../../${{ matrix.archive_name }}" panda-time-note
+            elif [ -f "bin/panda-time-note" ]; then
+              cd bin
+              tar -czf "../../${{ matrix.archive_name }}" panda-time-note
+            fi
           fi
-        elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          if [ "${{ matrix.arch }}" = "arm64" ]; then
-            # For ARM64, we need to build with specific flag
-            export GOARCH=arm64
-            wails3 build
-          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: |
+            ${{ matrix.archive_name }}
+            build/bin/**
+            bin/**
+
+  test_go:
+    name: Run Go Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        go-version: [1.24]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install linux dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          packages: libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config xvfb x11-xserver-utils at-spi2-core xdg-desktop-portal-gtk
+          version: 1.0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+          cache-dependency-path: "go.sum"
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run tests (mac)
+        if: matrix.os == 'macos-latest'
+        env:
+          CGO_LDFLAGS: -framework UniformTypeIdentifiers -mmacosx-version-min=10.13
+        run: go test -v ./...
+
+      - name: Run tests (windows)
+        if: matrix.os == 'windows-latest'
+        run: go test -v ./...
+
+      - name: Run tests (ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: >
+          xvfb-run --auto-servernum
+          sh -c '
+          dbus-update-activation-environment --systemd --all &&
+          go test -v ./...
+          '
+
+  test_js:
+    name: Run JS Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+  build_results:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: Build Results
+    needs: [build, test_go, test_js]
+    steps:
+      - run: |
+          build_result="${{ needs.build.result }}"
+          go_result="${{ needs.test_go.result }}"
+          js_result="${{ needs.test_js.result }}"
           
-          if [ -d "build/bin/panda-time-note.app" ]; then
-            cd build/bin
-            tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
-          elif [ -d "bin/panda-time-note.app" ]; then
-            cd bin
-            tar -czf "../../${{ matrix.archive_name }}" panda-time-note.app
+          if [[ $build_result == "success" || $build_result == "skipped" ]] && \
+             [[ $go_result == "success" || $go_result == "skipped" ]] && \
+             [[ $js_result == "success" || $js_result == "skipped" ]]; then
+            echo "All required jobs succeeded or were skipped"
+            exit 0
+          else
+            echo "One or more required jobs failed"
+            exit 1
           fi
-        else
-          # Linux
-          if [ -f "build/bin/panda-time-note" ]; then
-            cd build/bin
-            tar -czf "../../../${{ matrix.archive_name }}" panda-time-note
-          elif [ -f "bin/panda-time-note" ]; then
-            cd bin
-            tar -czf "../../${{ matrix.archive_name }}" panda-time-note
-          fi
-        fi
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.archive_name }}
-        path: |
-          ${{ matrix.archive_name }}
-          build/bin/**
-          bin/**
 
   release:
     name: Create Release
-    needs: build
+    needs: [build, test_go, test_js]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v') # Only create releases for version tags
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-    - name: Prepare release files
-      run: |
-        mkdir -p release
-        find artifacts -name "*.zip" -exec cp {} release/ \;
-        find artifacts -name "*.tar.gz" -exec cp {} release/ \;
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -name "*.zip" -exec cp {} release/ \;
+          find artifacts -name "*.tar.gz" -exec cp {} release/ \;
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: release/*
-        generate_release_notes: true
-        draft: false
-        prerelease: false
-        name: Release ${{ github.ref_name }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          name: Release ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
