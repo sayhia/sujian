@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.25'
   NODE_VERSION: '20'
 
 jobs:
@@ -76,118 +76,43 @@ jobs:
       run: |
         choco install upx
 
-    - name: Install frontend dependencies
-      working-directory: frontend
-      run: npm ci
+    - name: Install Wails CLI
+      run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
-    - name: Build frontend
-      working-directory: frontend
-      run: npm run build
-
-    - name: Build Go application (Linux)
-      if: matrix.os == 'linux-latest'
+    - name: Build Wails application
       run: |
-        export GOOS=linux
-        export GOARCH=amd64
-        export CGO_ENABLED=1
-        echo "Building for Linux/amd64"
-        mkdir -p build/bin
-        go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o build/bin/panda-time-note main.go
-        if command -v upx &> /dev/null; then
-          upx --best build/bin/panda-time-note
-        fi
-
-    - name: Build Go application (macOS)
-      if: matrix.os == 'darwin-latest'
-      run: |
-        export GOOS=darwin
-        export GOARCH=${{ matrix.arch }}
-        export CGO_ENABLED=1
-        export MACOSX_DEPLOYMENT_TARGET=10.15
-        echo "Building for macOS/${{ matrix.arch }}"
-        mkdir -p build/bin
-        
-        APP_NAME="panda-time-note"
-        if [ "${{ matrix.arch }}" = "arm64" ]; then
-          APP_NAME="panda-time-note-arm64"
-        fi
-        
-        go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o "build/bin/${APP_NAME}" main.go
-        
-        APP_DIR="build/bin/${APP_NAME}.app"
-        mkdir -p "$APP_DIR/Contents/MacOS"
-        mkdir -p "$APP_DIR/Contents/Resources"
-        
-        # Create Info.plist using printf
-        printf '<?xml version="1.0" encoding="UTF-8"?>\n' > "$APP_DIR/Contents/Info.plist"
-        printf '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '<plist version="1.0">\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '<dict>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>CFBundleDisplayName</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>Panda Time-Note</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>CFBundleExecutable</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>panda-time-note</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>CFBundleIdentifier</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>com.panda.time-note</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>CFBundleName</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>Panda Time-Note</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>CFBundlePackageType</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>APPL</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>CFBundleShortVersionString</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>1.0.0</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>CFBundleVersion</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>1</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>LSMinimumSystemVersion</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <string>10.15</string>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <key>NSHighResolutionCapable</key>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '    <true/>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '</dict>\n' >> "$APP_DIR/Contents/Info.plist"
-        printf '</plist>\n' >> "$APP_DIR/Contents/Info.plist"
-        
-        if [ "${{ matrix.arch }}" = "arm64" ]; then
-          mv "build/bin/panda-time-note-arm64" "$APP_DIR/Contents/MacOS/panda-time-note"
+        if [ "${{ matrix.os }}" = "darwin-latest" ]; then
+          PLATFORM="darwin/${{ matrix.arch }}"
+        elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+          PLATFORM="windows/amd64"
         else
-          mv "build/bin/panda-time-note" "$APP_DIR/Contents/MacOS/"
+          PLATFORM="linux/amd64"
         fi
         
-        # Skip UPX compression for macOS as it's not supported
-        # if command -v upx &> /dev/null; then
-        #   upx --best --force-macos "$APP_DIR/Contents/MacOS/panda-time-note"
-        # fi
+        echo "Building for $PLATFORM"
+        wails3 build -clean -platform $PLATFORM -upx
 
-    - name: Build Go application (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: powershell
+    - name: Create archives (Linux/macOS)
+      if: matrix.os != 'windows-latest'
       run: |
-        $env:GOOS = "windows"
-        $env:GOARCH = "amd64"
-        $env:CGO_ENABLED = "1"
-        echo "Building for Windows/amd64"
-        New-Item -ItemType Directory -Force -Path build/bin
-        go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o build/bin/panda-time-note.exe main.go
-        if (Get-Command upx -ErrorAction SilentlyContinue) {
-          upx --best build/bin/panda-time-note.exe
-        }
-
-    - name: Create archives (Linux)
-      if: matrix.os == 'linux-latest'
-      run: |
-        cd build/bin
-        tar -czf "../../../${{ matrix.archive_name }}" panda-time-note
-
-    - name: Create archives (macOS)
-      if: matrix.os == 'darwin-latest'
-      run: |
-        cd build/bin
-        if [ "${{ matrix.arch }}" = "arm64" ]; then
-          tar -czf "../../../${{ matrix.archive_name }}" panda-time-note-arm64.app
+        if [ "${{ matrix.os }}" = "darwin-latest" ]; then
+          # Wails creates .app bundles on macOS
+          cd build/bin
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+          else
+            tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+          fi
         else
-          tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
+          # Linux creates executable
+          cd build/bin
+          tar -czf "../../../${{ matrix.archive_name }}" panda-time-note
         fi
 
     - name: Create archives (Windows)
       if: matrix.os == 'windows-latest'
       run: |
+        # Wails creates .exe on Windows
         cd build/bin
         7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
 
