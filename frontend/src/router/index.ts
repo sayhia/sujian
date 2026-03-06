@@ -9,17 +9,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/demo/minimal',
     name: 'demoMinimalHome',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/minimal/MinimalHomeDemo.vue'),
   },
   {
     path: '/demo/minimal/editor',
     name: 'demoMinimalEditor',
-    component: () => import('../views/NoteEditorPage.vue'),
+    component: () => import('../views/demo/minimal/MinimalEditorDemo.vue'),
   },
   {
     path: '/demo/minimal/settings',
     name: 'demoMinimalSettings',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/minimal/MinimalSettingsDemo.vue'),
   },
   {
     path: '/demo/editorial',
