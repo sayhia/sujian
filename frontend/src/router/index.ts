@@ -39,17 +39,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/demo/dashboard',
     name: 'demoDashboardHome',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/dashboard/DashboardHomeDemo.vue'),
   },
   {
     path: '/demo/dashboard/editor',
     name: 'demoDashboardEditor',
-    component: () => import('../views/NoteEditorPage.vue'),
+    component: () => import('../views/demo/dashboard/DashboardEditorDemo.vue'),
   },
   {
     path: '/demo/dashboard/settings',
     name: 'demoDashboardSettings',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/dashboard/DashboardSettingsDemo.vue'),
   },
   {
     path: '/demo/capsule',
