@@ -24,17 +24,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/demo/editorial',
     name: 'demoEditorialHome',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/editorial/EditorialHomeDemo.vue'),
   },
   {
     path: '/demo/editorial/editor',
     name: 'demoEditorialEditor',
-    component: () => import('../views/NoteEditorPage.vue'),
+    component: () => import('../views/demo/editorial/EditorialEditorDemo.vue'),
   },
   {
     path: '/demo/editorial/settings',
     name: 'demoEditorialSettings',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/editorial/EditorialSettingsDemo.vue'),
   },
   {
     path: '/demo/dashboard',

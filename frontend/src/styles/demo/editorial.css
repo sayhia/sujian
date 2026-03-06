@@ -1,0 +1,85 @@
+.editorial-shell {
+  min-height: 100vh;
+  padding: 28px;
+  background: linear-gradient(165deg, #f3eee4 0%, #ece3d4 55%, #f8f4ec 100%);
+  color: #231b14;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.editorial-nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.editorial-nav a {
+  color: #5d4938;
+  text-decoration: none;
+  border-bottom: 1px solid #cdb79f;
+}
+
+.editorial-headline {
+  margin: 0;
+  font-size: clamp(36px, 6vw, 64px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.editorial-deck {
+  margin: 8px 0 18px;
+  color: #675447;
+}
+
+.editorial-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.editorial-main,
+.editorial-side,
+.editorial-panel {
+  border: 1px solid #d8c8b6;
+  border-radius: 16px;
+  background: color-mix(in srgb, #fff 80%, #f4ece0);
+  padding: 16px;
+}
+
+.editorial-main article {
+  padding: 12px 0;
+  border-bottom: 1px dashed #cdb79f;
+}
+
+.editorial-main article:last-child {
+  border-bottom: 0;
+}
+
+.editorial-editor textarea,
+.editorial-editor input,
+.editorial-settings select {
+  width: 100%;
+  border: 1px solid #cdb79f;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fffdf9;
+  font-family: inherit;
+}
+
+.editorial-editor textarea {
+  min-height: 220px;
+}
+
+.editorial-btn {
+  margin-top: 12px;
+  border: 1px solid #5d4938;
+  background: #5d4938;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+@media (max-width: 860px) {
+  .editorial-grid {
+    grid-template-columns: 1fr;
+  }
+}
