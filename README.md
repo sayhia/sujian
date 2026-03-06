@@ -2,6 +2,18 @@
 
 A time capsule note application built with Wails v3, combining Go backend with Vue.js frontend.
 
+## UI Demo Routes (2026-03)
+
+This project includes four interaction/style demos for comparison, isolated from production routes:
+
+1. `/demo/styles` (selector)
+2. Minimal: `/demo/minimal`, `/demo/minimal/editor`, `/demo/minimal/settings`
+3. Editorial: `/demo/editorial`, `/demo/editorial/editor`, `/demo/editorial/settings`
+4. Dashboard: `/demo/dashboard`, `/demo/dashboard/editor`, `/demo/dashboard/settings`
+5. Capsule: `/demo/capsule`, `/demo/capsule/editor`, `/demo/capsule/settings`
+
+Details: [`docs/plans/2026-03-06-ui-interaction-demo-notes.md`](docs/plans/2026-03-06-ui-interaction-demo-notes.md)
+
 ## Features
 
 - 📝 **Rich Text Editing**: Support for multiple text formats with TipTap editor
