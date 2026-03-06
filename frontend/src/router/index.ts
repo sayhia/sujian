@@ -2,6 +2,71 @@ import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-rou
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/demo/styles',
+    name: 'demoStyles',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/minimal',
+    name: 'demoMinimalHome',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/minimal/editor',
+    name: 'demoMinimalEditor',
+    component: () => import('../views/NoteEditorPage.vue'),
+  },
+  {
+    path: '/demo/minimal/settings',
+    name: 'demoMinimalSettings',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/editorial',
+    name: 'demoEditorialHome',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/editorial/editor',
+    name: 'demoEditorialEditor',
+    component: () => import('../views/NoteEditorPage.vue'),
+  },
+  {
+    path: '/demo/editorial/settings',
+    name: 'demoEditorialSettings',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/dashboard',
+    name: 'demoDashboardHome',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/dashboard/editor',
+    name: 'demoDashboardEditor',
+    component: () => import('../views/NoteEditorPage.vue'),
+  },
+  {
+    path: '/demo/dashboard/settings',
+    name: 'demoDashboardSettings',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/capsule',
+    name: 'demoCapsuleHome',
+    component: () => import('../views/Home.vue'),
+  },
+  {
+    path: '/demo/capsule/editor',
+    name: 'demoCapsuleEditor',
+    component: () => import('../views/NoteEditorPage.vue'),
+  },
+  {
+    path: '/demo/capsule/settings',
+    name: 'demoCapsuleSettings',
+    component: () => import('../views/Home.vue'),
+  },
+  {
     path: '/',
     name: 'home',
     component: () => import('../views/Home.vue'),
