@@ -54,17 +54,17 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/demo/capsule',
     name: 'demoCapsuleHome',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/capsule/CapsuleHomeDemo.vue'),
   },
   {
     path: '/demo/capsule/editor',
     name: 'demoCapsuleEditor',
-    component: () => import('../views/NoteEditorPage.vue'),
+    component: () => import('../views/demo/capsule/CapsuleEditorDemo.vue'),
   },
   {
     path: '/demo/capsule/settings',
     name: 'demoCapsuleSettings',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/demo/capsule/CapsuleSettingsDemo.vue'),
   },
   {
     path: '/',
