@@ -1,6 +1,6 @@
 <template>
   <main class="capsule-shell">
-    <nav class="capsule-nav">
+    <nav class="capsule-nav" aria-label="Capsule demo navigation">
       <RouterLink to="/demo/capsule">Home</RouterLink>
       <RouterLink to="/demo/capsule/editor">Editor</RouterLink>
       <RouterLink to="/demo/capsule/settings">Settings</RouterLink>

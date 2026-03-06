@@ -1,6 +1,6 @@
 <template>
   <main class="dashboard-shell">
-    <nav class="dashboard-nav">
+    <nav class="dashboard-nav" aria-label="Dashboard demo navigation">
       <RouterLink to="/demo/dashboard">Home</RouterLink>
       <RouterLink to="/demo/dashboard/editor">Editor</RouterLink>
       <RouterLink to="/demo/dashboard/settings">Settings</RouterLink>

@@ -1,6 +1,6 @@
 <template>
   <main class="minimal-shell">
-    <nav class="minimal-nav">
+    <nav class="minimal-nav" aria-label="Minimal demo navigation">
       <RouterLink to="/demo/minimal">Home</RouterLink>
       <RouterLink to="/demo/minimal/editor">Editor</RouterLink>
       <RouterLink to="/demo/minimal/settings">Settings</RouterLink>

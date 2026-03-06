@@ -1,6 +1,6 @@
 <template>
   <main class="editorial-shell">
-    <nav class="editorial-nav">
+    <nav class="editorial-nav" aria-label="Editorial demo navigation">
       <RouterLink to="/demo/editorial">Home</RouterLink>
       <RouterLink to="/demo/editorial/editor">Editor</RouterLink>
       <RouterLink to="/demo/editorial/settings">Settings</RouterLink>
