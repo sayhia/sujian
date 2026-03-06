@@ -31,5 +31,5 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/minimal.css';
+import '../../../styles/demo/minimal.css';
 </script>

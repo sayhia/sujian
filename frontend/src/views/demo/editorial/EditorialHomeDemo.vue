@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/editorial.css';
-import { useDemoNotesViewModel } from '@/composables/demo/useDemoNotesViewModel';
+import '../../../styles/demo/editorial.css';
+import { useDemoNotesViewModel } from '../../../composables/demo/useDemoNotesViewModel';
 
 const { visibleNotes } = useDemoNotesViewModel();
 </script>

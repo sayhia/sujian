@@ -45,9 +45,9 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/dashboard.css';
-import { useDemoNotesViewModel } from '@/composables/demo/useDemoNotesViewModel';
-import { useNoteStore } from '@/stores/noteStore';
+import '../../../styles/demo/dashboard.css';
+import { useDemoNotesViewModel } from '../../../composables/demo/useDemoNotesViewModel';
+import { useNoteStore } from '../../../stores/noteStore';
 
 const noteStore = useNoteStore();
 const { visibleNotes } = useDemoNotesViewModel(noteStore);

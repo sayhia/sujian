@@ -36,8 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/dashboard.css';
-import { useDemoEditorState } from '@/composables/demo/useDemoEditorState';
+import '../../../styles/demo/dashboard.css';
+import { useDemoEditorState } from '../../../composables/demo/useDemoEditorState';
 
 const { form, isSaving, save } = useDemoEditorState();
 </script>

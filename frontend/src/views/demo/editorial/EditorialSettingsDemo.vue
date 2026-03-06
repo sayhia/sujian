@@ -31,5 +31,5 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/editorial.css';
+import '../../../styles/demo/editorial.css';
 </script>

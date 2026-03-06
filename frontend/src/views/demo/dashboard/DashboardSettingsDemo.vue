@@ -30,5 +30,5 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/dashboard.css';
+import '../../../styles/demo/dashboard.css';
 </script>

@@ -20,8 +20,8 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/minimal.css';
-import { useDemoNotesViewModel } from '@/composables/demo/useDemoNotesViewModel';
+import '../../../styles/demo/minimal.css';
+import { useDemoNotesViewModel } from '../../../composables/demo/useDemoNotesViewModel';
 
 const { visibleNotes } = useDemoNotesViewModel();
 </script>

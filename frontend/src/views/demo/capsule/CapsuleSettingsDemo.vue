@@ -30,5 +30,5 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/demo/capsule.css';
+import '../../../styles/demo/capsule.css';
 </script>
