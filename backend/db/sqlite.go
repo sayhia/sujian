@@ -88,6 +88,19 @@ func RunMigrations(db *sql.DB) error {
 		return err
 	}
 
+	// Create drafts table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS drafts (
+			scope TEXT PRIMARY KEY,
+			note_id INTEGER,
+			payload TEXT NOT NULL,
+			updated_at DATETIME NOT NULL
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
 	// Create indexes for better query performance
 	indexes := []string{
 		"CREATE INDEX IF NOT EXISTS idx_notes_created_at ON notes(created_at DESC)",

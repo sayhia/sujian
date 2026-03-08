@@ -742,6 +742,50 @@ func (s *NoteService) GetSetting(key string) (string, error) {
 	return value, nil
 }
 
+func draftScope(noteID *int64) string {
+	if noteID == nil {
+		return "global"
+	}
+	return fmt.Sprintf("note:%d", *noteID)
+}
+
+// SaveDraft creates or updates a draft payload for a note scope.
+func (s *NoteService) SaveDraft(noteID *int64, payload string) error {
+	scope := draftScope(noteID)
+	_, err := s.db.Exec(`
+		INSERT INTO drafts (scope, note_id, payload, updated_at)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(scope) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at
+	`, scope, noteID, payload, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to save draft: %w", err)
+	}
+	return nil
+}
+
+// GetDraft returns the draft payload for a note scope.
+func (s *NoteService) GetDraft(noteID *int64) (string, error) {
+	scope := draftScope(noteID)
+	var payload string
+	if err := s.db.QueryRow(`SELECT payload FROM drafts WHERE scope = ?`, scope).Scan(&payload); err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("draft not found")
+		}
+		return "", fmt.Errorf("failed to get draft: %w", err)
+	}
+	return payload, nil
+}
+
+// DeleteDraft removes a draft by scope.
+func (s *NoteService) DeleteDraft(noteID *int64) error {
+	scope := draftScope(noteID)
+	_, err := s.db.Exec(`DELETE FROM drafts WHERE scope = ?`, scope)
+	if err != nil {
+		return fmt.Errorf("failed to delete draft: %w", err)
+	}
+	return nil
+}
+
 // ResetAllData drops note-related tables and recreates them,
 // effectively achieving a "delete table & rebuild" reset.
 func (s *NoteService) ResetAllData() error {

@@ -39,3 +39,27 @@ func TestSettingsRoundTrip(t *testing.T) {
 		t.Fatalf("unexpected value: got %q want %q", got, "modern-geo")
 	}
 }
+
+func TestDraftSaveLoadDelete(t *testing.T) {
+	svc := newTestService(t)
+
+	payload := `{"title":"draft","content":"body","type":"article"}`
+	if err := svc.SaveDraft(nil, payload); err != nil {
+		t.Fatalf("save draft: %v", err)
+	}
+
+	got, err := svc.GetDraft(nil)
+	if err != nil {
+		t.Fatalf("get draft: %v", err)
+	}
+	if got != payload {
+		t.Fatalf("unexpected draft payload: got %q want %q", got, payload)
+	}
+
+	if err := svc.DeleteDraft(nil); err != nil {
+		t.Fatalf("delete draft: %v", err)
+	}
+	if _, err := svc.GetDraft(nil); err == nil {
+		t.Fatalf("expected not found after delete")
+	}
+}

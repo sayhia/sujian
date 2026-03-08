@@ -151,3 +151,18 @@ func (h *NoteHandler) SetSetting(key, value string) error {
 func (h *NoteHandler) GetSetting(key string) (string, error) {
 	return h.service.GetSetting(key)
 }
+
+// SaveDraft saves a draft payload for a note (or global when noteID is nil).
+func (h *NoteHandler) SaveDraft(noteID *int64, payload string) error {
+	return h.service.SaveDraft(noteID, payload)
+}
+
+// GetDraft gets a draft payload for a note (or global when noteID is nil).
+func (h *NoteHandler) GetDraft(noteID *int64) (string, error) {
+	return h.service.GetDraft(noteID)
+}
+
+// DeleteDraft deletes a draft payload for a note (or global when noteID is nil).
+func (h *NoteHandler) DeleteDraft(noteID *int64) error {
+	return h.service.DeleteDraft(noteID)
+}
