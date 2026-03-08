@@ -10,6 +10,7 @@
     <p class="editorial-deck">给标题、副标题和正文更明确的排版角色。</p>
 
     <section class="editorial-panel">
+      <p class="editorial-save-state" data-testid="save-state">{{ saveStateLabel }}</p>
       <label>
         <span>标题</span>
         <input v-model="form.title" />
@@ -24,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useNoteStore } from '../../../stores/noteStore';
 import '../../../styles/demo/editorial.css';
@@ -44,6 +45,13 @@ const { form, isSaving, save, setFormFromNote, setEditingId, applyRouteMode } = 
   routeMode.value,
 );
 const isDemoMode = computed(() => route.path.startsWith('/demo/editorial'));
+const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+const saveStateLabel = computed(() => {
+  if (saveState.value === 'saving') return '保存中...';
+  if (saveState.value === 'saved') return '已保存';
+  if (saveState.value === 'error') return '保存失败';
+  return '待保存';
+});
 
 onMounted(async () => {
   applyRouteMode(routeMode.value);
@@ -61,9 +69,15 @@ onMounted(async () => {
 });
 
 async function handleSave() {
-  await save();
-  if (!isDemoMode.value) {
-    await router.push('/');
+  saveState.value = 'saving';
+  try {
+    await save();
+    saveState.value = 'saved';
+    if (!isDemoMode.value) {
+      await router.push('/');
+    }
+  } catch (error) {
+    saveState.value = 'error';
   }
 }
 </script>

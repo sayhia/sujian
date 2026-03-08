@@ -156,6 +156,12 @@
   border-radius: 999px;
 }
 
+.editorial-save-state {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #675447;
+}
+
 @media (max-width: 860px) {
   .editorial-grid {
     grid-template-columns: 1fr;

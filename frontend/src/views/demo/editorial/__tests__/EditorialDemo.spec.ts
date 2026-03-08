@@ -1,8 +1,10 @@
 import { mount } from '@vue/test-utils';
 import { useNoteStore } from '../../../../stores/noteStore';
 import { createPinia } from 'pinia';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import EditorialHomeDemo from '../EditorialHomeDemo.vue';
+import EditorialEditorDemo from '../EditorialEditorDemo.vue';
 
 describe('Editorial demo', () => {
   it('renders editorial chapter-like layout and navigation triad', () => {
@@ -116,5 +118,37 @@ describe('Editorial demo', () => {
     expect(wrapper.text()).not.toContain('旧闻摘录');
 
     window.location.hash = '';
+  });
+
+  it('shows saving/saved/error inline feedback without clearing form on failure', async () => {
+    const pinia = createPinia();
+    const router = createRouter({
+      history: createWebHashHistory(),
+      routes: [{ path: '/notes/new', component: EditorialEditorDemo }],
+    });
+    await router.push('/notes/new');
+    await router.isReady();
+    const store = useNoteStore(pinia);
+    store.createNote = vi.fn().mockRejectedValue(new Error('save failed')) as any;
+
+    const wrapper = mount(EditorialEditorDemo, {
+      global: {
+        plugins: [pinia, router],
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="String(to)"><slot /></a>',
+          },
+        },
+      },
+    });
+
+    const titleInput = wrapper.find('input');
+    await titleInput.setValue('不会丢失的标题');
+    await wrapper.find('button.editorial-btn').trigger('click');
+    await Promise.resolve();
+
+    expect(wrapper.find('[data-testid="save-state"]').text()).toContain('保存失败');
+    expect((wrapper.find('input').element as HTMLInputElement).value).toBe('不会丢失的标题');
   });
 });
