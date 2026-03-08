@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +26,38 @@ func newTestService(t *testing.T) *NoteService {
 		_ = db.Close()
 	})
 	return NewNoteService(db)
+}
+
+func TestServiceErrorKinds(t *testing.T) {
+	svc := newTestService(t)
+
+	if err := svc.SetSetting("", "x"); err == nil {
+		t.Fatalf("expected validation error")
+	} else {
+		var appErr *models.AppError
+		if !errors.As(err, &appErr) || appErr.Kind != models.ErrorKindValidation {
+			t.Fatalf("unexpected error kind: %v", err)
+		}
+	}
+
+	note, err := svc.Create(&models.CreateNoteRequest{Title: "v1", Content: "body", Tags: []string{}, Type: models.NoteTypeQuick})
+	if err != nil {
+		t.Fatalf("create note: %v", err)
+	}
+	title := "v2"
+	v1 := int64(1)
+	if _, err := svc.Update(&models.UpdateNoteRequest{ID: note.ID, Title: &title, ExpectedVersion: &v1}); err != nil {
+		t.Fatalf("first update should succeed: %v", err)
+	}
+	title2 := "v3"
+	if _, err := svc.Update(&models.UpdateNoteRequest{ID: note.ID, Title: &title2, ExpectedVersion: &v1}); err == nil {
+		t.Fatalf("expected conflict error")
+	} else {
+		var appErr *models.AppError
+		if !errors.As(err, &appErr) || appErr.Kind != models.ErrorKindConflict {
+			t.Fatalf("unexpected error kind: %v", err)
+		}
+	}
 }
 
 func TestSettingsRoundTrip(t *testing.T) {

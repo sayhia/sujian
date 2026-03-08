@@ -501,10 +501,10 @@ func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error
 		if req.ExpectedVersion != nil {
 			var exists int
 			if err := s.db.QueryRow("SELECT COUNT(*) FROM notes WHERE id = ? AND is_deleted = 0", req.ID).Scan(&exists); err == nil && exists > 0 {
-				return nil, fmt.Errorf("conflict: note version mismatch")
+				return nil, models.NewAppError(models.ErrorKindConflict, "note version mismatch", nil)
 			}
 		}
-		return nil, fmt.Errorf("note not found")
+		return nil, models.NewAppError(models.ErrorKindNotFound, "note not found", nil)
 	}
 
 	return s.GetByID(req.ID)
@@ -724,7 +724,7 @@ func (s *NoteService) IsFTSEnabled() bool {
 // SetSetting upserts a settings key/value pair.
 func (s *NoteService) SetSetting(key, value string) error {
 	if strings.TrimSpace(key) == "" {
-		return fmt.Errorf("setting key cannot be empty")
+		return models.NewAppError(models.ErrorKindValidation, "setting key cannot be empty", nil)
 	}
 	_, err := s.db.Exec(`
 		INSERT INTO settings (key, value, updated_at)
@@ -732,7 +732,7 @@ func (s *NoteService) SetSetting(key, value string) error {
 		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
 	`, key, value, time.Now())
 	if err != nil {
-		return fmt.Errorf("failed to set setting: %w", err)
+		return models.NewAppError(models.ErrorKindStorage, "failed to set setting", err)
 	}
 	return nil
 }
@@ -740,14 +740,14 @@ func (s *NoteService) SetSetting(key, value string) error {
 // GetSetting retrieves a settings value by key.
 func (s *NoteService) GetSetting(key string) (string, error) {
 	if strings.TrimSpace(key) == "" {
-		return "", fmt.Errorf("setting key cannot be empty")
+		return "", models.NewAppError(models.ErrorKindValidation, "setting key cannot be empty", nil)
 	}
 	var value string
 	if err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&value); err != nil {
 		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("setting not found")
+			return "", models.NewAppError(models.ErrorKindNotFound, "setting not found", nil)
 		}
-		return "", fmt.Errorf("failed to get setting: %w", err)
+		return "", models.NewAppError(models.ErrorKindStorage, "failed to get setting", err)
 	}
 	return value, nil
 }
