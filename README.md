@@ -2,9 +2,19 @@
 
 A time capsule note application built with Wails v3, combining Go backend with Vue.js frontend.
 
+## Default App Routes (2026-03-08)
+
+The default app flow is now locked to the Editorial experience:
+
+1. `/` -> Editorial Home
+2. `/notes/new` -> Editorial Editor (quick note mode)
+3. `/notes/new/article` -> Editorial Editor (article mode)
+4. `/notes/:id/edit` -> Editorial Editor (edit mode)
+5. `/settings` -> Editorial Settings
+
 ## UI Demo Routes (2026-03)
 
-This project includes four interaction/style demos for comparison, isolated from production routes:
+Demo routes remain available for style comparison:
 
 1. `/demo/styles` (selector)
 2. Minimal: `/demo/minimal`, `/demo/minimal/editor`, `/demo/minimal/settings`
