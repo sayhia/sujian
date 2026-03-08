@@ -8,7 +8,6 @@ import EditorialEditorDemo from '../EditorialEditorDemo.vue';
 
 describe('Editorial demo', () => {
   it('renders editorial chapter-like layout and navigation triad', () => {
-    window.location.hash = '#/demo/editorial';
     const wrapper = mount(EditorialHomeDemo, {
       global: {
         plugins: [createPinia()],
@@ -23,10 +22,9 @@ describe('Editorial demo', () => {
 
     expect(wrapper.text()).toContain('杂志感');
     const links = wrapper.findAll('a').map((item) => item.attributes('href'));
-    expect(links).toContain('/demo/editorial');
-    expect(links).toContain('/demo/editorial/editor');
-    expect(links).toContain('/demo/editorial/settings');
-    window.location.hash = '';
+    expect(links).toContain('/');
+    expect(links).toContain('/notes/new');
+    expect(links).toContain('/settings');
   });
 
   it('renders chapter directory, reading stream, and marginalia zones', () => {

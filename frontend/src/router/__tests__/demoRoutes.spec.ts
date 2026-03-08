@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import router from '../index';
 
-describe('demo style routes', () => {
-  it('contains editorial demo route group only', () => {
+describe('editorial routes', () => {
+  it('does not contain demo routes', () => {
     const paths = router.getRoutes().map((route) => route.path);
 
-    expect(paths).toContain('/demo/editorial');
-    expect(paths).not.toContain('/demo/styles');
-    expect(paths).not.toContain('/demo/minimal');
-    expect(paths).not.toContain('/demo/dashboard');
-    expect(paths).not.toContain('/demo/capsule');
+    expect(paths.find((path) => path.startsWith('/demo/'))).toBeUndefined();
   });
 
   it('maps default app routes to editorial components', () => {

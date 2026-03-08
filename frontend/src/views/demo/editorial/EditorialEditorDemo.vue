@@ -1,9 +1,9 @@
 <template>
   <main class="editorial-shell editorial-editor">
-    <nav class="editorial-nav">
-      <RouterLink to="/demo/editorial">Home</RouterLink>
-      <RouterLink to="/demo/editorial/editor">Editor</RouterLink>
-      <RouterLink to="/demo/editorial/settings">Settings</RouterLink>
+    <nav class="editorial-nav" aria-label="Editorial navigation">
+      <RouterLink to="/">Home</RouterLink>
+      <RouterLink to="/notes/new">Editor</RouterLink>
+      <RouterLink to="/settings">Settings</RouterLink>
     </nav>
 
     <h1 class="editorial-headline">杂志感编辑器</h1>
@@ -44,7 +44,6 @@ const { form, isSaving, save, setFormFromNote, setEditingId, applyRouteMode } = 
   undefined,
   routeMode.value,
 );
-const isDemoMode = computed(() => route.path.startsWith('/demo/editorial'));
 const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 const saveStateLabel = computed(() => {
   if (saveState.value === 'saving') return '保存中...';
@@ -73,9 +72,7 @@ async function handleSave() {
   try {
     await save();
     saveState.value = 'saved';
-    if (!isDemoMode.value) {
-      await router.push('/');
-    }
+    await router.push('/');
   } catch (error) {
     saveState.value = 'error';
   }

@@ -62,7 +62,7 @@ describe('Demo responsive and a11y baseline', () => {
       },
     });
 
-    expect(wrapper.find('nav[aria-label="Editorial demo navigation"]').exists()).toBe(true);
+    expect(wrapper.find('nav[aria-label="Editorial navigation"]').exists()).toBe(true);
     expect(wrapper.find('[data-zone="directory"][data-mobile-order="1"]').exists()).toBe(true);
     expect(wrapper.find('[data-zone="reading-stream"][data-mobile-order="2"]').exists()).toBe(true);
     expect(wrapper.find('[data-zone="marginalia"][data-mobile-order="3"]').exists()).toBe(true);

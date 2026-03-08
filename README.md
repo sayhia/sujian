@@ -12,16 +12,6 @@ The default app flow is now locked to the Editorial experience:
 4. `/notes/:id/edit` -> Editorial Editor (edit mode)
 5. `/settings` -> Editorial Settings
 
-## UI Demo Routes (2026-03)
-
-Only the Editorial demo routes are retained:
-
-1. `/demo/editorial`
-2. `/demo/editorial/editor`
-3. `/demo/editorial/settings`
-
-Details: [`docs/plans/2026-03-06-ui-interaction-demo-notes.md`](docs/plans/2026-03-06-ui-interaction-demo-notes.md)
-
 ## Editorial Behavior Baseline
 
 1. Home supports keyword/tag/time filtering in the reading stream.

@@ -1,9 +1,9 @@
 <template>
   <main class="editorial-shell editorial-settings">
     <nav class="editorial-nav" aria-label="Editorial settings navigation">
-      <RouterLink :to="homePath">Home</RouterLink>
-      <RouterLink :to="editorPath">Editor</RouterLink>
-      <RouterLink :to="settingsPath">Settings</RouterLink>
+      <RouterLink to="/">Home</RouterLink>
+      <RouterLink to="/notes/new">Editor</RouterLink>
+      <RouterLink to="/settings">Settings</RouterLink>
     </nav>
 
     <h1 class="editorial-headline">杂志感设置</h1>
@@ -59,18 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import '../../../styles/demo/editorial.css';
 import { useEditorialSettings } from '../../../composables/demo/useEditorialSettings';
-
-const currentPath = computed(() => {
-  if (typeof window === 'undefined') return '/';
-  const hashPath = window.location.hash.replace(/^#/, '');
-  return hashPath || '/';
-});
-const isDemoMode = computed(() => currentPath.value.startsWith('/demo/editorial'));
-const homePath = computed(() => (isDemoMode.value ? '/demo/editorial' : '/'));
-const editorPath = computed(() => (isDemoMode.value ? '/demo/editorial/editor' : '/notes/new'));
-const settingsPath = computed(() => (isDemoMode.value ? '/demo/editorial/settings' : '/settings'));
 const { settings } = useEditorialSettings();
 </script>
