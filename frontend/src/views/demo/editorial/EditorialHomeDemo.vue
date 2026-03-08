@@ -1,5 +1,5 @@
 <template>
-  <main class="editorial-shell">
+  <main class="editorial-shell editorial-chinese-first">
     <nav class="editorial-nav" aria-label="Editorial demo navigation">
       <RouterLink :to="homePath">Home</RouterLink>
       <RouterLink :to="editorPath">Editor</RouterLink>
@@ -7,7 +7,7 @@
       <RouterLink v-if="isDemoMode" to="/demo/styles">All Styles</RouterLink>
     </nav>
 
-    <h1 class="editorial-headline">杂志感</h1>
+    <h1 class="editorial-headline editorial-serif-heading">杂志感</h1>
     <p class="editorial-deck">章节化叙事，用更强排版强调“回看感”。</p>
 
     <section class="editorial-grid">
@@ -20,7 +20,7 @@
         </ol>
       </aside>
 
-      <section class="editorial-main" data-zone="reading-stream">
+      <section class="editorial-main editorial-reading-measure" data-zone="reading-stream">
         <h2>正文流</h2>
         <article v-for="note in chapterNotes" :key="note.id" class="editorial-reading-card">
           <h3>

@@ -6,6 +6,10 @@
   font-family: Georgia, "Times New Roman", serif;
 }
 
+.editorial-chinese-first {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+}
+
 .editorial-nav {
   display: flex;
   gap: 10px;
@@ -25,9 +29,15 @@
   letter-spacing: -0.02em;
 }
 
+.editorial-serif-heading {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+}
+
 .editorial-deck {
   margin: 8px 0 18px;
   color: #675447;
+  line-height: 1.6;
+  max-width: 46ch;
 }
 
 .editorial-grid {
@@ -71,6 +81,15 @@
 
 .editorial-main article:last-child {
   border-bottom: 0;
+}
+
+.editorial-reading-measure {
+  max-width: 72ch;
+}
+
+.editorial-reading-measure p {
+  font-size: 16px;
+  line-height: 1.85;
 }
 
 .editorial-btn-link {

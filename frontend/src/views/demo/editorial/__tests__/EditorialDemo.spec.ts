@@ -52,4 +52,25 @@ describe('Editorial demo', () => {
 
     window.location.hash = '';
   });
+
+  it('applies chinese-first typographic classes and constrained reading widths', () => {
+    window.location.hash = '#/';
+    const wrapper = mount(EditorialHomeDemo, {
+      global: {
+        plugins: [createPinia()],
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="String(to)"><slot /></a>',
+          },
+        },
+      },
+    });
+
+    expect(wrapper.find('main.editorial-shell.editorial-chinese-first').exists()).toBe(true);
+    expect(wrapper.find('.editorial-reading-measure').exists()).toBe(true);
+    expect(wrapper.find('.editorial-serif-heading').exists()).toBe(true);
+
+    window.location.hash = '';
+  });
 });
