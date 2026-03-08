@@ -14,9 +14,9 @@
         <h2>Typography System</h2>
         <label>
           <span>标题风格</span>
-          <select>
-            <option>古典衬线</option>
-            <option>现代几何</option>
+          <select data-testid="settings-typography" v-model="settings.typography">
+            <option value="classic-serif">古典衬线</option>
+            <option value="modern-geo">现代几何</option>
           </select>
         </label>
       </section>
@@ -25,9 +25,9 @@
         <h2>Paper & Material</h2>
         <label>
           <span>纸张纹理</span>
-          <select>
-            <option>亚麻纸</option>
-            <option>铜版纸</option>
+          <select data-testid="settings-material" v-model="settings.material">
+            <option value="linen-paper">亚麻纸</option>
+            <option value="coated-paper">铜版纸</option>
           </select>
         </label>
       </section>
@@ -36,10 +36,10 @@
         <h2>Reading Cadence</h2>
         <label>
           <span>章节间距</span>
-          <select>
-            <option>宽松</option>
-            <option>标准</option>
-            <option>紧凑</option>
+          <select data-testid="settings-cadence" v-model="settings.cadence">
+            <option value="wide">宽松</option>
+            <option value="standard">标准</option>
+            <option value="compact">紧凑</option>
           </select>
         </label>
       </section>
@@ -48,9 +48,9 @@
         <h2>Writing Behavior</h2>
         <label>
           <span>自动保存节奏</span>
-          <select>
-            <option>每 30 秒</option>
-            <option>每 60 秒</option>
+          <select data-testid="settings-writing" v-model="settings.writing">
+            <option value="autosave-30s">每 30 秒</option>
+            <option value="autosave-60s">每 60 秒</option>
           </select>
         </label>
       </section>
@@ -61,6 +61,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import '../../../styles/demo/editorial.css';
+import { useEditorialSettings } from '../../../composables/demo/useEditorialSettings';
 
 const currentPath = computed(() => {
   if (typeof window === 'undefined') return '/';
@@ -71,4 +72,5 @@ const isDemoMode = computed(() => currentPath.value.startsWith('/demo/editorial'
 const homePath = computed(() => (isDemoMode.value ? '/demo/editorial' : '/'));
 const editorPath = computed(() => (isDemoMode.value ? '/demo/editorial/editor' : '/notes/new'));
 const settingsPath = computed(() => (isDemoMode.value ? '/demo/editorial/settings' : '/settings'));
+const { settings } = useEditorialSettings();
 </script>

@@ -69,4 +69,51 @@ describe('Demo responsive and a11y baseline', () => {
 
     window.location.hash = '';
   });
+
+  it('binds settings controls to persisted state and restores values on mount', () => {
+    const memoryStorage = {
+      store: new Map<string, string>(),
+      getItem(key: string) {
+        return this.store.get(key) ?? null;
+      },
+      setItem(key: string, value: string) {
+        this.store.set(key, value);
+      },
+      removeItem(key: string) {
+        this.store.delete(key);
+      },
+    };
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: memoryStorage,
+    });
+
+    window.localStorage.setItem(
+      'editorial-settings',
+      JSON.stringify({
+        typography: 'modern-geo',
+        material: 'coated-paper',
+        cadence: 'compact',
+        writing: 'autosave-60s',
+      }),
+    );
+    window.location.hash = '#/settings';
+    const wrapper = mount(EditorialSettingsDemo, {
+      global: {
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="String(to)"><slot /></a>',
+          },
+        },
+      },
+    });
+
+    expect((wrapper.find('[data-testid="settings-typography"]').element as HTMLSelectElement).value).toBe('modern-geo');
+    expect((wrapper.find('[data-testid="settings-material"]').element as HTMLSelectElement).value).toBe('coated-paper');
+    expect((wrapper.find('[data-testid="settings-cadence"]').element as HTMLSelectElement).value).toBe('compact');
+    expect((wrapper.find('[data-testid="settings-writing"]').element as HTMLSelectElement).value).toBe('autosave-60s');
+
+    window.location.hash = '';
+  });
 });
