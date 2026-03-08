@@ -12,6 +12,30 @@
     <section class="editorial-grid">
       <aside class="editorial-directory" data-zone="directory" data-mobile-order="1">
         <h2>目录</h2>
+        <label>
+          <span>检索</span>
+          <input data-testid="search-input" v-model="searchQuery" />
+        </label>
+        <label>
+          <span>时间</span>
+          <select data-testid="time-filter" v-model="timeFilter">
+            <option value="all">全部</option>
+            <option value="today">今日</option>
+            <option value="week">近 7 天</option>
+            <option value="month">近 30 天</option>
+          </select>
+        </label>
+        <div>
+          <button
+            v-for="tag in availableTags"
+            :key="tag"
+            :data-testid="`tag-${tag}`"
+            type="button"
+            @click="toggleTag(tag)"
+          >
+            {{ selectedTags.includes(tag) ? `#${tag} ✓` : `#${tag}` }}
+          </button>
+        </div>
       </aside>
       <section class="editorial-main editorial-reading-measure" data-zone="reading-stream" data-mobile-order="2">
         <article v-for="note in visibleNotes.slice(0, 4)" :key="note.id">
@@ -32,7 +56,7 @@ import { computed } from 'vue';
 import '../../../styles/demo/editorial.css';
 import { useDemoNotesViewModel } from '../../../composables/demo/useDemoNotesViewModel';
 
-const { visibleNotes } = useDemoNotesViewModel();
+const { visibleNotes, searchQuery, timeFilter, availableTags, selectedTags, toggleTag } = useDemoNotesViewModel();
 const currentPath = computed(() => {
   if (typeof window === 'undefined') return '/';
   const hashPath = window.location.hash.replace(/^#/, '');
