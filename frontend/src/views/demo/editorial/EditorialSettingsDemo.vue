@@ -1,10 +1,10 @@
 <template>
   <main class="editorial-shell editorial-settings">
-    <nav class="editorial-nav" aria-label="Editorial settings navigation">
-      <RouterLink :to="homePath">Home</RouterLink>
-      <RouterLink :to="editorPath">Editor</RouterLink>
-      <RouterLink :to="settingsPath">Settings</RouterLink>
-      <RouterLink v-if="isDemoMode" to="/demo/styles">All Styles</RouterLink>
+    <nav class="editorial-nav">
+      <RouterLink to="/demo/editorial">Home</RouterLink>
+      <RouterLink to="/demo/editorial/editor">Editor</RouterLink>
+      <RouterLink to="/demo/editorial/settings">Settings</RouterLink>
+      <RouterLink to="/demo/styles">All Styles</RouterLink>
     </nav>
 
     <h1 class="editorial-headline">杂志感设置</h1>
@@ -60,17 +60,5 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import '../../../styles/demo/editorial.css';
-
-const currentPath = computed(() => {
-  if (typeof window === 'undefined') return '/';
-  const hashPath = window.location.hash.replace(/^#/, '');
-  return hashPath || '/';
-});
-
-const isDemoMode = computed(() => currentPath.value.startsWith('/demo/editorial'));
-const homePath = computed(() => (isDemoMode.value ? '/demo/editorial' : '/'));
-const editorPath = computed(() => (isDemoMode.value ? '/demo/editorial/editor' : '/notes/new'));
-const settingsPath = computed(() => (isDemoMode.value ? '/demo/editorial/settings' : '/settings'));
 </script>

@@ -5,7 +5,6 @@ import EditorialHomeDemo from '../EditorialHomeDemo.vue';
 
 describe('Editorial demo', () => {
   it('renders editorial chapter-like layout and navigation triad', () => {
-    window.location.hash = '#/demo/editorial';
     const wrapper = mount(EditorialHomeDemo, {
       global: {
         plugins: [createPinia()],
@@ -23,8 +22,6 @@ describe('Editorial demo', () => {
     expect(links).toContain('/demo/editorial');
     expect(links).toContain('/demo/editorial/editor');
     expect(links).toContain('/demo/editorial/settings');
-
-    window.location.hash = '';
   });
 
   it('renders chapter directory, reading stream, and marginalia zones', () => {

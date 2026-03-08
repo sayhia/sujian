@@ -9,31 +9,22 @@ type EditorForm = {
   type: 'quick' | 'article';
 };
 
-export type EditorRouteMode = 'create' | 'article' | 'edit';
-
-export function useDemoEditorState(
-  noteStore = useNoteStore(),
-  initialNote?: Partial<Note>,
-  routeMode?: EditorRouteMode,
-) {
-  const resolvedRouteMode: EditorRouteMode =
-    routeMode ?? (typeof initialNote?.id === 'number' ? 'edit' : 'create');
-  const editingId = ref<number | null>(typeof initialNote?.id === 'number' ? initialNote.id : null);
+export function useDemoEditorState(noteStore = useNoteStore(), initialNote?: Partial<Note>) {
   const form = ref<EditorForm>({
     title: initialNote?.title ?? '',
     content: initialNote?.content ?? '',
     tags: [...(initialNote?.tags ?? [])],
-    type: initialNote?.type ?? (resolvedRouteMode === 'article' ? 'article' : 'quick'),
+    type: initialNote?.type ?? 'quick',
   });
   const isSaving = ref(false);
 
-  const isEditMode = computed(() => Number.isFinite(editingId.value));
+  const isEditMode = computed(() => Number.isFinite(initialNote?.id));
 
   async function save() {
     isSaving.value = true;
     try {
-      if (isEditMode.value && editingId.value) {
-        return await noteStore.updateNote(editingId.value, {
+      if (isEditMode.value && initialNote?.id) {
+        return await noteStore.updateNote(initialNote.id, {
           title: form.value.title,
           content: form.value.content,
           tags: form.value.tags,
@@ -52,47 +43,10 @@ export function useDemoEditorState(
     }
   }
 
-  function setFormFromNote(note: Partial<Note>) {
-    form.value = {
-      title: note.title ?? '',
-      content: note.content ?? '',
-      tags: [...(note.tags ?? [])],
-      type: note.type ?? form.value.type ?? 'quick',
-    };
-  }
-
-  function setType(type: EditorForm['type']) {
-    form.value.type = type;
-  }
-
-  function setEditingId(id: number | null) {
-    editingId.value = id;
-  }
-
-  function applyRouteMode(mode: EditorRouteMode) {
-    if (mode === 'create') {
-      editingId.value = null;
-      form.value.type = 'quick';
-      return;
-    }
-
-    if (mode === 'article') {
-      editingId.value = null;
-      form.value.type = 'article';
-    }
-  }
-
-  applyRouteMode(resolvedRouteMode);
-
   return {
     form,
     isSaving,
     isEditMode,
-    editingId,
     save,
-    setFormFromNote,
-    setType,
-    setEditingId,
-    applyRouteMode,
   };
 }

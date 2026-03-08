@@ -69,32 +69,25 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: () => import('../views/demo/editorial/EditorialHomeDemo.vue'),
-    meta: { appStyle: 'editorial' },
+    component: () => import('../views/Home.vue'),
   },
   {
     path: '/notes/new',
     name: 'newNote',
-    component: () => import('../views/demo/editorial/EditorialEditorDemo.vue'),
-    meta: { mode: 'create', appStyle: 'editorial' },
+    component: () => import('../views/NoteEditorPage.vue'),
+    meta: { mode: 'create' },
   },
   {
     path: '/notes/new/article',
     name: 'newArticle',
-    component: () => import('../views/demo/editorial/EditorialEditorDemo.vue'),
-    meta: { mode: 'create', type: 'article', appStyle: 'editorial' },
+    component: () => import('../views/NoteEditorPage.vue'),
+    meta: { mode: 'create', type: 'article' },
   },
   {
     path: '/notes/:id/edit',
     name: 'editNote',
-    component: () => import('../views/demo/editorial/EditorialEditorDemo.vue'),
-    meta: { mode: 'edit', appStyle: 'editorial' },
-  },
-  {
-    path: '/settings',
-    name: 'settings',
-    component: () => import('../views/demo/editorial/EditorialSettingsDemo.vue'),
-    meta: { appStyle: 'editorial' },
+    component: () => import('../views/NoteEditorPage.vue'),
+    meta: { mode: 'edit' },
   },
 ];
 

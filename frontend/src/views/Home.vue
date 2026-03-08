@@ -145,6 +145,16 @@
           >
             <Keyboard class="btn-icon" aria-hidden="true" />
           </button>
+
+          <button
+            @click="openDemoLab"
+            class="btn-shortcuts"
+            aria-label="打开风格实验室"
+            title="风格实验室"
+            type="button"
+          >
+            <Sparkles class="btn-icon" aria-hidden="true" />
+          </button>
           
           <!-- Split Button: New Note -->
           <Menu as="div" class="split-button-wrapper">
@@ -1029,6 +1039,10 @@ function showToast(message: string, type: 'success' | 'error' | 'info' | 'warnin
 
 function openSettingsModal() {
   showSettingsModal.value = true;
+}
+
+function openDemoLab() {
+  router.push('/demo/styles');
 }
 
 function closeSettingsModal() {
