@@ -711,6 +711,37 @@ func (s *NoteService) IsFTSEnabled() bool {
 	return s.ftsEnabled
 }
 
+// SetSetting upserts a settings key/value pair.
+func (s *NoteService) SetSetting(key, value string) error {
+	if strings.TrimSpace(key) == "" {
+		return fmt.Errorf("setting key cannot be empty")
+	}
+	_, err := s.db.Exec(`
+		INSERT INTO settings (key, value, updated_at)
+		VALUES (?, ?, ?)
+		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+	`, key, value, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to set setting: %w", err)
+	}
+	return nil
+}
+
+// GetSetting retrieves a settings value by key.
+func (s *NoteService) GetSetting(key string) (string, error) {
+	if strings.TrimSpace(key) == "" {
+		return "", fmt.Errorf("setting key cannot be empty")
+	}
+	var value string
+	if err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&value); err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("setting not found")
+		}
+		return "", fmt.Errorf("failed to get setting: %w", err)
+	}
+	return value, nil
+}
+
 // ResetAllData drops note-related tables and recreates them,
 // effectively achieving a "delete table & rebuild" reset.
 func (s *NoteService) ResetAllData() error {

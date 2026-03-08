@@ -141,3 +141,13 @@ func (h *NoteHandler) ResetAllData() error {
 func (h *NoteHandler) IsFTSEnabled() bool {
 	return h.service.IsFTSEnabled()
 }
+
+// SetSetting sets a backend settings key/value pair.
+func (h *NoteHandler) SetSetting(key, value string) error {
+	return h.service.SetSetting(key, value)
+}
+
+// GetSetting gets a backend settings value by key.
+func (h *NoteHandler) GetSetting(key string) (string, error) {
+	return h.service.GetSetting(key)
+}
