@@ -11,7 +11,7 @@
     <p class="editorial-deck">章节化叙事，用更强排版强调“回看感”。</p>
 
     <section class="editorial-grid">
-      <aside class="editorial-directory" data-zone="directory">
+      <aside class="editorial-directory" data-zone="directory" data-mobile-order="1">
         <h2>目录</h2>
         <ol>
           <li v-for="note in chapterNotes" :key="`toc-${note.id}`">
@@ -20,7 +20,7 @@
         </ol>
       </aside>
 
-      <section class="editorial-main editorial-reading-measure" data-zone="reading-stream">
+      <section class="editorial-main editorial-reading-measure" data-zone="reading-stream" data-mobile-order="2">
         <h2>正文流</h2>
         <article v-for="note in chapterNotes" :key="note.id" class="editorial-reading-card">
           <h3>
@@ -30,7 +30,7 @@
         </article>
       </section>
 
-      <aside class="editorial-side" data-zone="marginalia">
+      <aside class="editorial-side" data-zone="marginalia" data-mobile-order="3">
         <h2>旁注</h2>
         <p>条目数：{{ visibleNotes.length }}</p>
         <p>标签：{{ topTags.join(' / ') || '尚未归档' }}</p>

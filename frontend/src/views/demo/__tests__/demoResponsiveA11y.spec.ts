@@ -55,4 +55,26 @@ describe('Demo responsive and a11y baseline', () => {
 
     window.location.hash = '';
   });
+
+  it('keeps primary navigation and reading flow valid in collapsed mobile layout', () => {
+    window.location.hash = '#/';
+    const wrapper = mount(EditorialHomeDemo, {
+      global: {
+        plugins: [createPinia()],
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="String(to)"><slot /></a>',
+          },
+        },
+      },
+    });
+
+    expect(wrapper.find('nav[aria-label="Editorial demo navigation"]').exists()).toBe(true);
+    expect(wrapper.find('[data-zone="directory"][data-mobile-order="1"]').exists()).toBe(true);
+    expect(wrapper.find('[data-zone="reading-stream"][data-mobile-order="2"]').exists()).toBe(true);
+    expect(wrapper.find('[data-zone="marginalia"][data-mobile-order="3"]').exists()).toBe(true);
+
+    window.location.hash = '';
+  });
 });
