@@ -3,6 +3,7 @@ package handlers
 import (
 	"panda-time-note/backend/models"
 	"panda-time-note/backend/services"
+	"time"
 )
 
 // NoteHandler handles note-related operations
@@ -177,4 +178,19 @@ func (h *NoteHandler) GetDraft(noteID *int64) (string, error) {
 // DeleteDraft deletes a draft payload for a note (or global when noteID is nil).
 func (h *NoteHandler) DeleteDraft(noteID *int64) error {
 	return h.service.DeleteDraft(noteID)
+}
+
+// Restore restores a soft-deleted note.
+func (h *NoteHandler) Restore(id int64) error {
+	return h.service.Restore(id)
+}
+
+// BatchRestore restores multiple soft-deleted notes.
+func (h *NoteHandler) BatchRestore(ids []int64) (int, error) {
+	return h.service.BatchRestore(ids)
+}
+
+// PurgeDeleted physically deletes soft-deleted notes before the given time.
+func (h *NoteHandler) PurgeDeleted(beforeTime time.Time) (int, error) {
+	return h.service.PurgeDeleted(beforeTime)
 }

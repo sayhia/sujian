@@ -796,6 +796,59 @@ func (s *NoteService) DeleteDraft(noteID *int64) error {
 	return nil
 }
 
+// Restore restores a soft-deleted note.
+func (s *NoteService) Restore(id int64) error {
+	result, err := s.db.Exec("UPDATE notes SET is_deleted = 0, updated_at = ? WHERE id = ? AND is_deleted = 1", time.Now(), id)
+	if err != nil {
+		return fmt.Errorf("failed to restore note: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get affected rows: %w", err)
+	}
+	if affected == 0 {
+		return fmt.Errorf("note not found")
+	}
+	return nil
+}
+
+// BatchRestore restores multiple soft-deleted notes.
+func (s *NoteService) BatchRestore(ids []int64) (int, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	placeholders := strings.Repeat("?,", len(ids))
+	placeholders = placeholders[:len(placeholders)-1]
+	args := make([]interface{}, 0, len(ids)+1)
+	args = append(args, time.Now())
+	for _, id := range ids {
+		args = append(args, id)
+	}
+	query := fmt.Sprintf("UPDATE notes SET is_deleted = 0, updated_at = ? WHERE is_deleted = 1 AND id IN (%s)", placeholders)
+	result, err := s.db.Exec(query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to batch restore notes: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get affected rows: %w", err)
+	}
+	return int(affected), nil
+}
+
+// PurgeDeleted physically deletes soft-deleted notes before the given time.
+func (s *NoteService) PurgeDeleted(beforeTime time.Time) (int, error) {
+	result, err := s.db.Exec("DELETE FROM notes WHERE is_deleted = 1 AND updated_at <= ?", beforeTime)
+	if err != nil {
+		return 0, fmt.Errorf("failed to purge deleted notes: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get affected rows: %w", err)
+	}
+	return int(affected), nil
+}
+
 // ResetAllData drops note-related tables and recreates them,
 // effectively achieving a "delete table & rebuild" reset.
 func (s *NoteService) ResetAllData() error {

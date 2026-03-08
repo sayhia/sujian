@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"strings"
 	"testing"
+	"time"
 
 	backenddb "panda-time-note/backend/db"
 	"panda-time-note/backend/models"
@@ -96,5 +97,41 @@ func TestUpdateWithVersionConflict(t *testing.T) {
 		ExpectedVersion: &v1,
 	}); err == nil || !strings.Contains(err.Error(), "conflict") {
 		t.Fatalf("expected conflict, got: %v", err)
+	}
+}
+
+func TestRestoreAndPurgeDeleted(t *testing.T) {
+	svc := newTestService(t)
+
+	n1, err := svc.Create(&models.CreateNoteRequest{Title: "restore", Content: "body", Tags: []string{}, Type: models.NoteTypeQuick})
+	if err != nil {
+		t.Fatalf("create n1: %v", err)
+	}
+	if err := svc.Delete(n1.ID); err != nil {
+		t.Fatalf("delete n1: %v", err)
+	}
+	if err := svc.Restore(n1.ID); err != nil {
+		t.Fatalf("restore n1: %v", err)
+	}
+	if _, err := svc.GetByID(n1.ID); err != nil {
+		t.Fatalf("expected restored note: %v", err)
+	}
+
+	n2, err := svc.Create(&models.CreateNoteRequest{Title: "purge", Content: "body", Tags: []string{}, Type: models.NoteTypeQuick})
+	if err != nil {
+		t.Fatalf("create n2: %v", err)
+	}
+	if err := svc.Delete(n2.ID); err != nil {
+		t.Fatalf("delete n2: %v", err)
+	}
+	deleted, err := svc.PurgeDeleted(time.Now().Add(time.Hour))
+	if err != nil {
+		t.Fatalf("purge: %v", err)
+	}
+	if deleted < 1 {
+		t.Fatalf("expected at least one purged row, got %d", deleted)
+	}
+	if _, err := svc.GetByID(n2.ID); err == nil {
+		t.Fatalf("expected note to be purged")
 	}
 }
