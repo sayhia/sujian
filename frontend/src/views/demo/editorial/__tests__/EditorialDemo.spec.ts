@@ -26,4 +26,30 @@ describe('Editorial demo', () => {
 
     window.location.hash = '';
   });
+
+  it('renders chapter directory, reading stream, and marginalia zones', () => {
+    window.location.hash = '#/';
+    const wrapper = mount(EditorialHomeDemo, {
+      global: {
+        plugins: [createPinia()],
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="String(to)"><slot /></a>',
+          },
+        },
+      },
+    });
+
+    expect(wrapper.find('[data-zone="directory"]').exists()).toBe(true);
+    expect(wrapper.find('[data-zone="reading-stream"]').exists()).toBe(true);
+    expect(wrapper.find('[data-zone="marginalia"]').exists()).toBe(true);
+
+    const links = wrapper.findAll('a').map((item) => item.attributes('href'));
+    expect(links).toContain('/');
+    expect(links).toContain('/notes/new');
+    expect(links).toContain('/settings');
+
+    window.location.hash = '';
+  });
 });
