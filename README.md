@@ -22,6 +22,12 @@ Only the Editorial demo routes are retained:
 
 Details: [`docs/plans/2026-03-06-ui-interaction-demo-notes.md`](docs/plans/2026-03-06-ui-interaction-demo-notes.md)
 
+## Editorial Behavior Baseline
+
+1. Home supports keyword/tag/time filtering in the reading stream.
+2. Editor supports route-driven `create/article/edit` save behavior.
+3. Settings values persist to local storage and restore on load.
+
 ## Features
 
 - 📝 **Rich Text Editing**: Support for multiple text formats with TipTap editor

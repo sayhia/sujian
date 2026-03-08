@@ -4,6 +4,14 @@
 状态：Final Baseline  
 适用版本：默认路由与唯一 UI 形态均为 Editorial
 
+## 实施状态（2026-03-08）
+
+1. 已完成：Editorial-only 路由拓扑。
+2. 已完成：Home 搜索/标签/时间筛选交互。
+3. 已完成：Editor 的 create/article/edit 路由模式编排。
+4. 已完成：保存中/成功/失败内联反馈与失败后表单保留。
+5. 已完成：Settings 四分区配置本地持久化与恢复。
+
 ## 1. 目标与范围
 
 本设计用于定义 Panda Time-Note 在当前阶段的完整前端功能形态，确保：
