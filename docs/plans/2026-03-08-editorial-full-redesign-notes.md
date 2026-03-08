@@ -18,5 +18,5 @@ The UI shifts to a Chinese-first literary reading/writing model with:
 
 ## Notes
 
-- Demo routes (`/demo/*`) are still available for internal style comparison.
+- Legacy demo variants were removed; only Editorial routes are retained.
 - Route metadata now includes `appStyle: editorial` for the default app flow.
