@@ -4,6 +4,14 @@
 状态：Design Complete  
 范围：Panda Time-Note 在现有 Go + SQLite 架构下的后端能力全量设计
 
+## 实施状态（2026-03-08）
+
+1. 已完成：`settings` 服务端读写接口（handler + service）。
+2. 已完成：`drafts` 表迁移与草稿恢复接口。
+3. 已完成：`notes.version` 乐观锁与冲突检测更新。
+4. 已完成：回收站恢复与物理清理接口（restore/purge）。
+5. 已完成：service 错误类型结构化（validation/not_found/conflict/storage）。
+
 ## 1. 设计目标
 
 1. 在不破坏现有前端调用契约前提下，完成后端能力体系化设计。
