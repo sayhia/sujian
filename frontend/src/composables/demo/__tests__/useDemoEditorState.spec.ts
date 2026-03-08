@@ -31,22 +31,23 @@ describe('useDemoEditorState', () => {
       updateNote: vi.fn().mockResolvedValue(updated),
     } as any;
 
-    const createVm = useDemoEditorState(store, undefined, 'create');
+    const createVm = useDemoEditorState(store);
     createVm.form.value.title = 'Create Mode';
     await createVm.save();
     expect(store.createNote).toHaveBeenCalledWith(expect.objectContaining({ type: 'quick' }));
 
-    const articleVm = useDemoEditorState(store, undefined, 'article');
+    const articleVm = useDemoEditorState(store, {
+      title: '',
+      content: '',
+      tags: [],
+      type: 'article',
+    } as any);
     expect(articleVm.form.value.type).toBe('article');
     articleVm.form.value.title = 'Article Mode';
     await articleVm.save();
     expect(store.createNote).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'article' }));
 
-    const editVm = useDemoEditorState(
-      store,
-      { id: 18, title: 'Draft', content: 'Body', tags: [], type: 'quick' } as any,
-      'edit',
-    );
+    const editVm = useDemoEditorState(store, { id: 18, title: 'Draft', content: 'Body', tags: [], type: 'quick' } as any);
     editVm.form.value.title = 'Edited';
     await editVm.save();
     expect(store.updateNote).toHaveBeenCalledWith(18, expect.objectContaining({ title: 'Edited' }));
