@@ -33,10 +33,11 @@ type CreateNoteRequest struct {
 
 // UpdateNoteRequest represents the request to update a note
 type UpdateNoteRequest struct {
-	ID      int64     `json:"id"`
-	Title   *string   `json:"title,omitempty"`
-	Content *string   `json:"content,omitempty"`
-	Tags    *[]string `json:"tags,omitempty"`
+	ID              int64     `json:"id"`
+	Title           *string   `json:"title,omitempty"`
+	Content         *string   `json:"content,omitempty"`
+	Tags            *[]string `json:"tags,omitempty"`
+	ExpectedVersion *int64    `json:"expected_version,omitempty"`
 }
 
 // GetNotesRequest represents the request to get notes

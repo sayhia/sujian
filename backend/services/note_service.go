@@ -478,10 +478,14 @@ func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error
 
 	updates = append(updates, "updated_at = ?")
 	args = append(args, time.Now())
+	updates = append(updates, "version = version + 1")
 
 	args = append(args, req.ID)
-
 	query := fmt.Sprintf("UPDATE notes SET %s WHERE id = ? AND is_deleted = 0", strings.Join(updates, ", "))
+	if req.ExpectedVersion != nil {
+		query += " AND version = ?"
+		args = append(args, *req.ExpectedVersion)
+	}
 
 	result, err := s.db.Exec(query, args...)
 	if err != nil {
@@ -494,6 +498,12 @@ func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error
 	}
 
 	if affected == 0 {
+		if req.ExpectedVersion != nil {
+			var exists int
+			if err := s.db.QueryRow("SELECT COUNT(*) FROM notes WHERE id = ? AND is_deleted = 0", req.ID).Scan(&exists); err == nil && exists > 0 {
+				return nil, fmt.Errorf("conflict: note version mismatch")
+			}
+		}
 		return nil, fmt.Errorf("note not found")
 	}
 

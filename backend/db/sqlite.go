@@ -57,6 +57,7 @@ func RunMigrations(db *sql.DB) error {
 			content TEXT NOT NULL,
 			tags TEXT DEFAULT '[]',
 			type TEXT DEFAULT 'quick',
+			version INTEGER DEFAULT 1,
 			created_at DATETIME NOT NULL,
 			updated_at DATETIME NOT NULL,
 			is_archived BOOLEAN DEFAULT 0,
@@ -74,6 +75,15 @@ func RunMigrations(db *sql.DB) error {
 	// Ignore error if column already exists
 	if err != nil {
 		log.Printf("Note: type column may already exist: %v", err)
+	}
+
+	// Add version column if it doesn't exist (for optimistic locking)
+	_, err = db.Exec(`
+		ALTER TABLE notes ADD COLUMN version INTEGER DEFAULT 1
+	`)
+	// Ignore error if column already exists
+	if err != nil {
+		log.Printf("Note: version column may already exist: %v", err)
 	}
 
 	// Create settings table

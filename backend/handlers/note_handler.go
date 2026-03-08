@@ -63,6 +63,18 @@ func (h *NoteHandler) Update(id int64, title, content *string, tags *[]string) (
 	return h.service.Update(req)
 }
 
+// UpdateWithVersion updates an existing note with optimistic version check.
+func (h *NoteHandler) UpdateWithVersion(id int64, title, content *string, tags *[]string, expectedVersion *int64) (*models.Note, error) {
+	req := &models.UpdateNoteRequest{
+		ID:              id,
+		Title:           title,
+		Content:         content,
+		Tags:            tags,
+		ExpectedVersion: expectedVersion,
+	}
+	return h.service.Update(req)
+}
+
 // Delete soft deletes a note
 func (h *NoteHandler) Delete(id int64) error {
 	return h.service.Delete(id)

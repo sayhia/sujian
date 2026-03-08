@@ -2,9 +2,11 @@ package services
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
 	backenddb "panda-time-note/backend/db"
+	"panda-time-note/backend/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -61,5 +63,38 @@ func TestDraftSaveLoadDelete(t *testing.T) {
 	}
 	if _, err := svc.GetDraft(nil); err == nil {
 		t.Fatalf("expected not found after delete")
+	}
+}
+
+func TestUpdateWithVersionConflict(t *testing.T) {
+	svc := newTestService(t)
+
+	note, err := svc.Create(&models.CreateNoteRequest{
+		Title:   "v1",
+		Content: "body",
+		Tags:    []string{},
+		Type:    models.NoteTypeQuick,
+	})
+	if err != nil {
+		t.Fatalf("create note: %v", err)
+	}
+
+	title1 := "v2"
+	v1 := int64(1)
+	if _, err := svc.Update(&models.UpdateNoteRequest{
+		ID:              note.ID,
+		Title:           &title1,
+		ExpectedVersion: &v1,
+	}); err != nil {
+		t.Fatalf("first update should succeed: %v", err)
+	}
+
+	title2 := "v3"
+	if _, err := svc.Update(&models.UpdateNoteRequest{
+		ID:              note.ID,
+		Title:           &title2,
+		ExpectedVersion: &v1,
+	}); err == nil || !strings.Contains(err.Error(), "conflict") {
+		t.Fatalf("expected conflict, got: %v", err)
 	}
 }
