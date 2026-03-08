@@ -4,7 +4,6 @@
       <RouterLink :to="homePath">Home</RouterLink>
       <RouterLink :to="editorPath">Editor</RouterLink>
       <RouterLink :to="settingsPath">Settings</RouterLink>
-      <RouterLink v-if="isDemoMode" to="/demo/styles">All Styles</RouterLink>
     </nav>
 
     <h1 class="editorial-headline">杂志感设置</h1>

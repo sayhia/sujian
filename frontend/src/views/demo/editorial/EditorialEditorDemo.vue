@@ -4,7 +4,6 @@
       <RouterLink to="/demo/editorial">Home</RouterLink>
       <RouterLink to="/demo/editorial/editor">Editor</RouterLink>
       <RouterLink to="/demo/editorial/settings">Settings</RouterLink>
-      <RouterLink to="/demo/styles">All Styles</RouterLink>
     </nav>
 
     <h1 class="editorial-headline">杂志感编辑器</h1>

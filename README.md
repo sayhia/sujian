@@ -14,13 +14,11 @@ The default app flow is now locked to the Editorial experience:
 
 ## UI Demo Routes (2026-03)
 
-Demo routes remain available for style comparison:
+Only the Editorial demo routes are retained:
 
-1. `/demo/styles` (selector)
-2. Minimal: `/demo/minimal`, `/demo/minimal/editor`, `/demo/minimal/settings`
-3. Editorial: `/demo/editorial`, `/demo/editorial/editor`, `/demo/editorial/settings`
-4. Dashboard: `/demo/dashboard`, `/demo/dashboard/editor`, `/demo/dashboard/settings`
-5. Capsule: `/demo/capsule`, `/demo/capsule/editor`, `/demo/capsule/settings`
+1. `/demo/editorial`
+2. `/demo/editorial/editor`
+3. `/demo/editorial/settings`
 
 Details: [`docs/plans/2026-03-06-ui-interaction-demo-notes.md`](docs/plans/2026-03-06-ui-interaction-demo-notes.md)
 
