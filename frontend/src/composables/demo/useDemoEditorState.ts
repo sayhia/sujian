@@ -9,13 +9,21 @@ type EditorForm = {
   type: 'quick' | 'article';
 };
 
-export function useDemoEditorState(noteStore = useNoteStore(), initialNote?: Partial<Note>) {
+export type EditorRouteMode = 'create' | 'article' | 'edit';
+
+export function useDemoEditorState(
+  noteStore = useNoteStore(),
+  initialNote?: Partial<Note>,
+  routeMode?: EditorRouteMode,
+) {
+  const resolvedRouteMode: EditorRouteMode =
+    routeMode ?? (typeof initialNote?.id === 'number' ? 'edit' : 'create');
   const editingId = ref<number | null>(typeof initialNote?.id === 'number' ? initialNote.id : null);
   const form = ref<EditorForm>({
     title: initialNote?.title ?? '',
     content: initialNote?.content ?? '',
     tags: [...(initialNote?.tags ?? [])],
-    type: initialNote?.type ?? 'quick',
+    type: initialNote?.type ?? (resolvedRouteMode === 'article' ? 'article' : 'quick'),
   });
   const isSaving = ref(false);
 
@@ -61,6 +69,21 @@ export function useDemoEditorState(noteStore = useNoteStore(), initialNote?: Par
     editingId.value = id;
   }
 
+  function applyRouteMode(mode: EditorRouteMode) {
+    if (mode === 'create') {
+      editingId.value = null;
+      form.value.type = 'quick';
+      return;
+    }
+
+    if (mode === 'article') {
+      editingId.value = null;
+      form.value.type = 'article';
+    }
+  }
+
+  applyRouteMode(resolvedRouteMode);
+
   return {
     form,
     isSaving,
@@ -70,5 +93,6 @@ export function useDemoEditorState(noteStore = useNoteStore(), initialNote?: Par
     setFormFromNote,
     setType,
     setEditingId,
+    applyRouteMode,
   };
 }

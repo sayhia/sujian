@@ -98,6 +98,26 @@
   min-height: 220px;
 }
 
+.editorial-writing-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 2.5fr) minmax(180px, 1fr);
+  gap: 16px;
+}
+
+.editorial-desk-main {
+  display: grid;
+  gap: 12px;
+}
+
+.editorial-desk-main label {
+  display: grid;
+  gap: 6px;
+}
+
+.editorial-metadata-rail h2 {
+  margin-top: 0;
+}
+
 .editorial-btn {
   margin-top: 12px;
   border: 1px solid #5d4938;
@@ -109,6 +129,10 @@
 
 @media (max-width: 860px) {
   .editorial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .editorial-writing-desk {
     grid-template-columns: 1fr;
   }
 }
