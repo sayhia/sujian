@@ -17,13 +17,13 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            archive_name: panda-time-note-linux-amd64.tar.gz
+            archive_name: sujian-linux-amd64.tar.gz
           - os: windows-latest
-            archive_name: panda-time-note-windows-amd64.zip
+            archive_name: sujian-windows-amd64.zip
           - os: macos-latest
-            archive_name: panda-time-note-macos-amd64.tar.gz
+            archive_name: sujian-macos-amd64.tar.gz
           - os: macos-latest
-            archive_name: panda-time-note-macos-arm64.tar.gz
+            archive_name: sujian-macos-arm64.tar.gz
             arch: arm64
 
     steps:
@@ -76,29 +76,29 @@ jobs:
         run: |
           # Check what was built and create appropriate archives
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            if [ -f "build/bin/panda-time-note.exe" ]; then
+            if [ -f "build/bin/sujian.exe" ]; then
               cd build/bin
-              7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
-            elif [ -f "bin/panda-time-note.exe" ]; then
+              7z a -tzip "../../${{ matrix.archive_name }}" sujian.exe
+            elif [ -f "bin/sujian.exe" ]; then
               cd bin
-              7z a -tzip "../../${{ matrix.archive_name }}" panda-time-note.exe
+              7z a -tzip "../../${{ matrix.archive_name }}" sujian.exe
             fi
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            if [ -d "build/bin/panda-time-note.app" ]; then
+            if [ -d "build/bin/sujian.app" ]; then
               cd build/bin
-              tar -czf "../../../${{ matrix.archive_name }}" panda-time-note.app
-            elif [ -d "bin/panda-time-note.app" ]; then
+              tar -czf "../../../${{ matrix.archive_name }}" sujian.app
+            elif [ -d "bin/sujian.app" ]; then
               cd bin
-              tar -czf "../../${{ matrix.archive_name }}" panda-time-note.app
+              tar -czf "../../${{ matrix.archive_name }}" sujian.app
             fi
           else
             # Linux
-            if [ -f "build/bin/panda-time-note" ]; then
+            if [ -f "build/bin/sujian" ]; then
               cd build/bin
-              tar -czf "../../../${{ matrix.archive_name }}" panda-time-note
-            elif [ -f "bin/panda-time-note" ]; then
+              tar -czf "../../../${{ matrix.archive_name }}" sujian
+            elif [ -f "bin/sujian" ]; then
               cd bin
-              tar -czf "../../${{ matrix.archive_name }}" panda-time-note
+              tar -czf "../../${{ matrix.archive_name }}" sujian
             fi
           fi
 

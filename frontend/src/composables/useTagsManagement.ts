@@ -106,7 +106,7 @@ export function useTagsManagement(initialTags: Ref<string[]>, maxTags: number = 
 
   function loadTagColors() {
     try {
-      const saved = localStorage.getItem('panda-tag-colors');
+      const saved = localStorage.getItem('sujian-tag-colors');
       if (saved) {
         const colors = JSON.parse(saved);
         tagColors.value = new Map(Object.entries(colors));
@@ -119,7 +119,7 @@ export function useTagsManagement(initialTags: Ref<string[]>, maxTags: number = 
   function saveTagColors() {
     try {
       const obj = Object.fromEntries(tagColors.value);
-      localStorage.setItem('panda-tag-colors', JSON.stringify(obj));
+      localStorage.setItem('sujian-tag-colors', JSON.stringify(obj));
     } catch (e) {
       console.error('保存标签颜色失败:', e);
     }

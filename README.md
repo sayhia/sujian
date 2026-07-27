@@ -1,4 +1,4 @@
-# Panda Time-Note
+# 素笺 Sujian
 
 A time capsule note application built with Wails v3, combining Go backend with Vue.js frontend.
 
@@ -48,7 +48,7 @@ The default app flow is now locked to the Editorial experience:
 ## Project Structure
 
 ```
-panda-time-note/
+sujian/
 ├── frontend/               # Vue.js frontend
 │   ├── src/
 │   │   ├── components/     # Vue components
@@ -77,8 +77,8 @@ panda-time-note/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/panda-time-note.git
-cd panda-time-note
+git clone https://github.com/yourusername/sujian.git
+cd sujian
 ```
 
 2. Install dependencies:

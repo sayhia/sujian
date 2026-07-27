@@ -1,6 +1,6 @@
 const zh = {
   common: {
-    appName: 'Panda Time-Note',
+    appName: '素笺',
     confirm: '确定',
   },
   header: {

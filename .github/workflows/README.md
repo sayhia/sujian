@@ -1,4 +1,4 @@
-# 🐼 Panda Time-Note - GitHub Actions 自动构建
+# 📜 素笺 Sujian - GitHub Actions 自动构建
 
 本项目配置了 GitHub Actions 自动构建和发布流程，支持多平台打包。
 
@@ -15,10 +15,10 @@
 
 | 平台 | 架构 | 输出文件 |
 |------|------|----------|
-| Windows | amd64 | `panda-time-note-windows-amd64.zip` |
-| macOS | Intel (amd64) | `panda-time-note-macos-amd64.tar.gz` |
-| macOS | Apple Silicon (arm64) | `panda-time-note-macos-arm64.tar.gz` |
-| Linux | amd64 | `panda-time-note-linux-amd64.tar.gz` |
+| Windows | amd64 | `sujian-windows-amd64.zip` |
+| macOS | Intel (amd64) | `sujian-macos-amd64.tar.gz` |
+| macOS | Apple Silicon (arm64) | `sujian-macos-arm64.tar.gz` |
+| Linux | amd64 | `sujian-linux-amd64.tar.gz` |
 
 ## 🏗️ 构建过程
 

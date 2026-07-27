@@ -1,6 +1,6 @@
 const ja = {
   common: {
-    appName: 'Panda Time-Note',
+    appName: '素箋',
     confirm: '確認',
   },
   search: {

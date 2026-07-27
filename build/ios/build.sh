@@ -2,8 +2,8 @@
 set -e
 
 # Build configuration
-APP_NAME="panda-time-note"
-BUNDLE_ID="com.example.pandanote"
+APP_NAME="sujian"
+BUNDLE_ID="com.sujian.app"
 VERSION="0.1.0"
 BUILD_NUMBER="0.1.0"
 BUILD_DIR="build/ios"

@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"panda-time-note/backend/models"
-	"panda-time-note/backend/services"
+	"sujian/backend/models"
+	"sujian/backend/services"
 	"time"
 )
 

@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>panda-time-note</string>
+    <string>sujian</string>
     <key>CFBundleIdentifier</key>
-    <string>com.example.pandanote</string>
+    <string>com.sujian.app</string>
     <key>CFBundleName</key>
     <string>My Product</string>
     <key>CFBundleDisplayName</key>

@@ -1,6 +1,6 @@
 const ko = {
   common: {
-    appName: 'Panda Time-Note',
+    appName: 'Sujian',
     confirm: '확인',
   },
   search: {

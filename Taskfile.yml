@@ -9,7 +9,7 @@ includes:
   android: ./build/android/Taskfile.yml
 
 vars:
-  APP_NAME: "panda-time-note"
+  APP_NAME: "sujian"
   BIN_DIR: "bin"
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
 

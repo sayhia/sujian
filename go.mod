@@ -1,4 +1,4 @@
-module panda-time-note
+module sujian
 
 go 1.25
 

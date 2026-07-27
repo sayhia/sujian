@@ -1,6 +1,6 @@
 const en = {
   common: {
-    appName: 'Panda Time-Note',
+    appName: 'Sujian',
     confirm: 'Confirm',
   },
   search: {

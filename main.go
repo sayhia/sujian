@@ -6,9 +6,9 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
-	"panda-time-note/backend/db"
-	"panda-time-note/backend/handlers"
-	"panda-time-note/backend/services"
+	"sujian/backend/db"
+	"sujian/backend/handlers"
+	"sujian/backend/services"
 )
 
 //go:embed all:frontend/dist
@@ -25,7 +25,7 @@ func main() {
 	noteHandler := handlers.NewNoteHandler(noteService)
 
 	app := application.New(application.Options{
-		Name:        "panda-time-note",
+		Name:        "sujian",
 		Description: "A time capsule note application",
 		Services: []application.Service{
 			application.NewService(noteHandler),
@@ -39,7 +39,7 @@ func main() {
 	})
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:            "Panda Time-Note",
+		Title:            "素笺 Sujian",
 		Width:            1200,
 		Height:           800,
 		BackgroundColour: application.NewRGB(255, 255, 255),

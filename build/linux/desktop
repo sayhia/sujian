@@ -1,13 +1,13 @@
 [Desktop Entry]
 Version=1.0
 Name=My Product
-Comment=A panda-time-note application
+Comment=A Sujian note-taking application
 # The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/panda-time-note %u
+Exec=/usr/local/bin/sujian %u
 Terminal=false
 Type=Application
-Icon=panda-time-note
+Icon=sujian
 Categories=Utility;
-StartupWMClass=panda-time-note
+StartupWMClass=sujian
 
  

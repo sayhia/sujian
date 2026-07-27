@@ -19,12 +19,12 @@ func New() (*Database, error) {
 		return nil, err
 	}
 
-	appDir := filepath.Join(homeDir, ".panda-time-note")
+	appDir := filepath.Join(homeDir, ".sujian")
 	if err := os.MkdirAll(appDir, 0755); err != nil {
 		return nil, err
 	}
 
-	dbPath := filepath.Join(appDir, "panda-time-note.db")
+	dbPath := filepath.Join(appDir, "sujian.db")
 	log.Printf("Database path: %s", dbPath)
 
 	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_busy_timeout=5000")

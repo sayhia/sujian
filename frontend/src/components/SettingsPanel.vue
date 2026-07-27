@@ -519,7 +519,7 @@
             <div class="about-logo">
               <Feather class="about-logo-icon" />
             </div>
-            <h4 class="about-title">Panda Time-Note</h4>
+            <h4 class="about-title">素笺 Sujian</h4>
             <p class="about-version">
               {{ t('settings.about.version') }}
             </p>
@@ -551,7 +551,7 @@ import { useI18n } from 'vue-i18n';
 import { useSettingsStore } from '../stores/settingsStore';
 import type { Theme, FontSize, ThemePack, ToolbarPosition, ToolbarStyle, ToolbarLayout } from '../stores/settingsStore';
 import { useNoteStore } from '../stores/noteStore';
-import * as NoteHandler from '../../bindings/panda-time-note/backend/handlers/notehandler';
+import * as NoteHandler from '../../bindings/sujian/backend/handlers/notehandler';
 import {
   Settings,
   X,
@@ -1011,7 +1011,7 @@ function exportToolbarConfig() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `panda-time-note-toolbar-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `sujian-toolbar-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     if (showToast) showToast('工具栏配置已导出', 'success');
@@ -1190,7 +1190,7 @@ async function exportData() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `panda-time-note-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `sujian-export-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     if (showToast) showToast(t('settings.data.exportSuccess'), 'success');

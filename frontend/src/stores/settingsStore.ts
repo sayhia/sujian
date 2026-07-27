@@ -131,7 +131,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   // Load settings from localStorage
   function loadSettings() {
-    const saved = localStorage.getItem('panda-time-note-settings');
+    const saved = localStorage.getItem('sujian-settings');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -258,7 +258,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   // Save settings to localStorage
   function saveSettings() {
-    localStorage.setItem('panda-time-note-settings', JSON.stringify(settings.value));
+    localStorage.setItem('sujian-settings', JSON.stringify(settings.value));
     applySettings();
   }
 

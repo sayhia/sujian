@@ -36,9 +36,9 @@ export CGO_ENABLED=1
 if [ "$PLATFORM" = "windows" ]; then
     export CC=x86_64-w64-mingw32-gcc
     export CXX=x86_64-w64-mingw32-g++
-    OUTPUT="panda-time-note.exe"
+    OUTPUT="sujian.exe"
 else
-    OUTPUT="panda-time-note"
+    OUTPUT="sujian"
 fi
 
 # Build the application
@@ -54,9 +54,9 @@ fi
 if [ "$PLATFORM" = "darwin" ]; then
     echo "Creating macOS app bundle..."
     
-    APP_NAME="panda-time-note"
+    APP_NAME="sujian"
     if [ "$ARCH" = "arm64" ]; then
-        APP_NAME="panda-time-note-arm64"
+        APP_NAME="sujian-arm64"
     fi
     
     APP_DIR="build/bin/${APP_NAME}.app"
@@ -70,13 +70,13 @@ if [ "$PLATFORM" = "darwin" ]; then
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>Panda Time-Note</string>
+    <string>素笺 Sujian</string>
     <key>CFBundleExecutable</key>
-    <string>panda-time-note</string>
+    <string>sujian</string>
     <key>CFBundleIdentifier</key>
-    <string>com.panda.time-note</string>
+    <string>com.sujian.app</string>
     <key>CFBundleName</key>
-    <string>Panda Time-Note</string>
+    <string>素笺 Sujian</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

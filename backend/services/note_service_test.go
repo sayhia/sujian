@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	backenddb "panda-time-note/backend/db"
-	"panda-time-note/backend/models"
+	backenddb "sujian/backend/db"
+	"sujian/backend/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
