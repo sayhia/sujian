@@ -33,7 +33,7 @@ var Version = "0.0.0-dev"
 
 // ManifestURL 更新清单地址。默认指向本仓库 GitHub Releases 的 latest 资产。
 // 私有仓库或自建源时，构建时同样用 -X 覆盖。
-var ManifestURL = "https://github.com/sunmking/panda-time-note/releases/latest/download/latest.json"
+var ManifestURL = "https://github.com/sayhia/sujian/releases/latest/download/latest.json"
 
 // httpTimeoutFactor 单次 HTTP 请求超时倍数（下载用独立大超时）。
 const httpTimeout = 30 * time.Second
