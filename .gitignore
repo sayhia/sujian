@@ -14,3 +14,6 @@ build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 # vite build 临时文件
 frontend/*.timestamp-*.mjs
 frontend/vite.config.ts.timestamp-*
+
+# WorkBuddy 工作目录（内部记忆，不入库）
+.workbuddy
