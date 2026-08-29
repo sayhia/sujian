@@ -13,3 +13,4 @@ export const i18n = createI18n({
   messages,
 });
 
+export type MessageSchema = typeof zh;

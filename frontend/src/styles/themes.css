@@ -1,0 +1,186 @@
+/* ============================================================
+   素笺 Sujian · 主题系统（整套氛围随主题联动）
+   <html data-theme="light|dark" data-accent="olive|violet|navy|amber|emerald|crimson">
+   六套中式墨色：橄榄绿 / 紫韵 / 藏蓝 / 棕黄 / 翠绿 / 中国红
+   每套主题不仅提供点缀色（accent），还通过 --tint 微染纸面底色、
+   边框与语义色（成功/警告/危险），实现整体配色精细化适配。
+   ============================================================ */
+
+/* ---------- 暗色基座（中性值，主题化规则随后覆盖） ---------- */
+:root[data-theme="dark"] {
+  --ink-900: #edeae3;
+  --ink-700: #b5b0a6;
+  --ink-500: #837e74;
+  --line: #33302a;
+  --line-strong: #45413a;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 4px 12px rgba(0, 0, 0, 0.35), 0 16px 48px rgba(0, 0, 0, 0.45);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.3), 0 10px 32px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.4), 0 20px 64px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================
+   六套主题：点缀色 + 主题色调（tint，rgb 三元组）
+   ============================================================ */
+
+/* ---------- 橄榄绿 ---------- */
+:root[data-accent="olive"] {
+  --tint: 122, 139, 94;
+  --tint-dark: 169, 190, 133;
+  --accent: #7a8b5e;
+  --accent-strong: #5e6f46;
+  --accent-soft: rgba(122, 139, 94, 0.13);
+  --accent-ring: rgba(122, 139, 94, 0.35);
+}
+:root[data-theme="dark"][data-accent="olive"] {
+  --accent: #a9be85;
+  --accent-strong: #c2d3a4;
+  --accent-soft: rgba(169, 190, 133, 0.15);
+  --accent-ring: rgba(169, 190, 133, 0.38);
+}
+
+/* ---------- 紫韵 ---------- */
+:root[data-accent="violet"] {
+  --tint: 139, 111, 168;
+  --tint-dark: 180, 155, 208;
+  --accent: #8b6fa8;
+  --accent-strong: #6f538d;
+  --accent-soft: rgba(139, 111, 168, 0.13);
+  --accent-ring: rgba(139, 111, 168, 0.35);
+}
+:root[data-theme="dark"][data-accent="violet"] {
+  --accent: #b49bd0;
+  --accent-strong: #cab6e0;
+  --accent-soft: rgba(180, 155, 208, 0.15);
+  --accent-ring: rgba(180, 155, 208, 0.38);
+}
+
+/* ---------- 藏蓝 ---------- */
+:root[data-accent="navy"] {
+  --tint: 64, 89, 122;
+  --tint-dark: 126, 156, 192;
+  --accent: #40597a;
+  --accent-strong: #30425e;
+  --accent-soft: rgba(64, 89, 122, 0.13);
+  --accent-ring: rgba(64, 89, 122, 0.35);
+}
+:root[data-theme="dark"][data-accent="navy"] {
+  --accent: #7e9cc0;
+  --accent-strong: #9ab4d2;
+  --accent-soft: rgba(126, 156, 192, 0.15);
+  --accent-ring: rgba(126, 156, 192, 0.38);
+}
+
+/* ---------- 棕黄 ---------- */
+:root[data-accent="amber"] {
+  --tint: 168, 129, 79;
+  --tint-dark: 203, 159, 106;
+  --accent: #a8814f;
+  --accent-strong: #87653c;
+  --accent-soft: rgba(168, 129, 79, 0.13);
+  --accent-ring: rgba(168, 129, 79, 0.35);
+}
+:root[data-theme="dark"][data-accent="amber"] {
+  --accent: #cb9f6a;
+  --accent-strong: #ddb88a;
+  --accent-soft: rgba(203, 159, 106, 0.15);
+  --accent-ring: rgba(203, 159, 106, 0.38);
+}
+
+/* ---------- 翠绿 ---------- */
+:root[data-accent="emerald"] {
+  --tint: 62, 138, 104;
+  --tint-dark: 111, 188, 150;
+  --accent: #3e8a68;
+  --accent-strong: #2f6c51;
+  --accent-soft: rgba(62, 138, 104, 0.13);
+  --accent-ring: rgba(62, 138, 104, 0.35);
+}
+:root[data-theme="dark"][data-accent="emerald"] {
+  --accent: #6fbc96;
+  --accent-strong: #8dd0ad;
+  --accent-soft: rgba(111, 188, 150, 0.15);
+  --accent-ring: rgba(111, 188, 150, 0.38);
+}
+
+/* ---------- 中国红 ---------- */
+:root[data-accent="crimson"] {
+  --tint: 168, 75, 67;
+  --tint-dark: 212, 126, 114;
+  --accent: #a84b43;
+  --accent-strong: #8a3934;
+  --accent-soft: rgba(168, 75, 67, 0.12);
+  --accent-ring: rgba(168, 75, 67, 0.35);
+}
+:root[data-theme="dark"][data-accent="crimson"] {
+  --accent: #d47e72;
+  --accent-strong: #e09a90;
+  --accent-soft: rgba(212, 126, 114, 0.14);
+  --accent-ring: rgba(212, 126, 114, 0.38);
+}
+
+/* ============================================================
+   主题化适配（对任意主题生效）：
+   纸面底色 / 边框带主题色调；语义色与主题色相协调
+   ============================================================ */
+
+/* ---------- Light：纸面微染 + 语义色协调 ---------- */
+:root[data-accent] {
+  --paper-0: color-mix(in srgb, rgb(var(--tint)) 2.4%, #fbfaf7);
+  --paper-1: color-mix(in srgb, rgb(var(--tint)) 4%, #f4f1ea);
+  --paper-2: color-mix(in srgb, rgb(var(--tint)) 5.2%, #ece8df);
+  --line: color-mix(in srgb, rgb(var(--tint)) 9%, #e4dfd4);
+  --line-strong: color-mix(in srgb, rgb(var(--tint)) 11%, #d3cdc0);
+
+  --success: color-mix(in srgb, rgb(var(--tint)) 12%, #4f8a5b);
+  --warning: color-mix(in srgb, rgb(var(--tint)) 7%, #b98a2f);
+  --danger: color-mix(in srgb, rgb(var(--tint)) 9%, #c05b54);
+  --success-soft: color-mix(in srgb, var(--success) 14%, transparent);
+  --warning-soft: color-mix(in srgb, var(--warning) 16%, transparent);
+  --danger-soft: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+/* ---------- Dark：夜纸微染 + 语义色提亮协调 ---------- */
+:root[data-theme="dark"][data-accent] {
+  --paper-0: color-mix(in srgb, rgb(var(--tint-dark)) 4.2%, #171614);
+  --paper-1: color-mix(in srgb, rgb(var(--tint-dark)) 5.8%, #1e1c19);
+  --paper-2: color-mix(in srgb, rgb(var(--tint-dark)) 7.5%, #26231f);
+  --line: color-mix(in srgb, rgb(var(--tint-dark)) 10%, #33302a);
+  --line-strong: color-mix(in srgb, rgb(var(--tint-dark)) 12%, #45413a);
+
+  --success: color-mix(in srgb, rgb(var(--tint-dark)) 16%, #6cab78);
+  --warning: color-mix(in srgb, rgb(var(--tint-dark)) 12%, #d3a654);
+  --danger: color-mix(in srgb, rgb(var(--tint-dark)) 14%, #dd7b73);
+  --success-soft: color-mix(in srgb, var(--success) 16%, transparent);
+  --warning-soft: color-mix(in srgb, var(--warning) 18%, transparent);
+  --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+/* ---------- 字号档位 ---------- */
+:root[data-font-size="small"] {
+  font-size: 14px;
+}
+:root[data-font-size="large"] {
+  font-size: 18px;
+}
+
+/* ---------- 书写区宽度档位 ---------- */
+:root[data-editor-width="narrow"] {
+  --content-width: 660px;
+}
+:root[data-editor-width="medium"] {
+  --content-width: 840px;
+}
+:root[data-editor-width="wide"] {
+  --content-width: 1060px;
+}
+
+/* ---------- 动效开关 ---------- */
+:root[data-animations="off"] *,
+:root[data-animations="off"] *::before,
+:root[data-animations="off"] *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}

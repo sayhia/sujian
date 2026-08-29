@@ -18,28 +18,35 @@ import * as models$0 from "../models/models.js";
  * Archive archives or unarchives a note
  */
 export function Archive(id: number, archive: boolean): $CancellablePromise<void> {
-    return $Call.ByID(987171781, id, archive);
+    return $Call.ByID(1291897490, id, archive);
 }
 
 /**
  * BatchArchive archives multiple notes
  */
 export function BatchArchive(ids: number[], archive: boolean): $CancellablePromise<number> {
-    return $Call.ByID(4068343811, ids, archive);
+    return $Call.ByID(2546976298, ids, archive);
 }
 
 /**
  * BatchDelete deletes multiple notes
  */
 export function BatchDelete(ids: number[]): $CancellablePromise<number> {
-    return $Call.ByID(1216673704, ids);
+    return $Call.ByID(3338650271, ids);
+}
+
+/**
+ * BatchRestore restores multiple soft-deleted notes.
+ */
+export function BatchRestore(ids: number[]): $CancellablePromise<number> {
+    return $Call.ByID(2638014, ids);
 }
 
 /**
  * Create creates a new note
  */
 export function Create(title: string, content: string, tags: string[], noteType: string): $CancellablePromise<models$0.Note | null> {
-    return $Call.ByID(2873307485, title, content, tags, noteType).then(($result: any) => {
+    return $Call.ByID(3066879160, title, content, tags, noteType).then(($result: any) => {
         return $$createType1($result);
     });
 }
@@ -48,14 +55,21 @@ export function Create(title: string, content: string, tags: string[], noteType:
  * Delete soft deletes a note
  */
 export function Delete(id: number): $CancellablePromise<void> {
-    return $Call.ByID(3964279882, id);
+    return $Call.ByID(3664437095, id);
+}
+
+/**
+ * DeleteDraft deletes a draft payload for a note (or global when noteID is nil).
+ */
+export function DeleteDraft(noteID: number | null): $CancellablePromise<void> {
+    return $Call.ByID(1447011490, noteID);
 }
 
 /**
  * GetAll retrieves all notes with optional filters
  */
 export function GetAll(limit: number, offset: number, tags: string[], archived: boolean): $CancellablePromise<(models$0.Note | null)[]> {
-    return $Call.ByID(3544317650, limit, offset, tags, archived).then(($result: any) => {
+    return $Call.ByID(3783888763, limit, offset, tags, archived).then(($result: any) => {
         return $$createType2($result);
     });
 }
@@ -64,7 +78,7 @@ export function GetAll(limit: number, offset: number, tags: string[], archived: 
  * GetAllTags returns all unique tags
  */
 export function GetAllTags(): $CancellablePromise<string[]> {
-    return $Call.ByID(2022671227).then(($result: any) => {
+    return $Call.ByID(3606397582).then(($result: any) => {
         return $$createType3($result);
     });
 }
@@ -73,25 +87,39 @@ export function GetAllTags(): $CancellablePromise<string[]> {
  * GetByID retrieves a note by ID
  */
 export function GetByID(id: number): $CancellablePromise<models$0.Note | null> {
-    return $Call.ByID(2209596303, id).then(($result: any) => {
+    return $Call.ByID(1014752848, id).then(($result: any) => {
         return $$createType1($result);
     });
+}
+
+/**
+ * GetDraft gets a draft payload for a note (or global when noteID is nil).
+ */
+export function GetDraft(noteID: number | null): $CancellablePromise<string> {
+    return $Call.ByID(2909151083, noteID);
 }
 
 /**
  * GetFiltered retrieves notes with advanced filters
  */
 export function GetFiltered(limit: number, offset: number, tags: string[], search: string, archived: boolean | null, startTime: string | null, endTime: string | null): $CancellablePromise<(models$0.Note | null)[]> {
-    return $Call.ByID(3525323048, limit, offset, tags, search, archived, startTime, endTime).then(($result: any) => {
+    return $Call.ByID(1850769179, limit, offset, tags, search, archived, startTime, endTime).then(($result: any) => {
         return $$createType2($result);
     });
+}
+
+/**
+ * GetSetting gets a backend settings value by key.
+ */
+export function GetSetting(key: string): $CancellablePromise<string> {
+    return $Call.ByID(3170317684, key);
 }
 
 /**
  * GetStats returns statistics about notes
  */
 export function GetStats(): $CancellablePromise<models$0.NoteStats | null> {
-    return $Call.ByID(3703876762).then(($result: any) => {
+    return $Call.ByID(2214676859).then(($result: any) => {
         return $$createType5($result);
     });
 }
@@ -100,7 +128,7 @@ export function GetStats(): $CancellablePromise<models$0.NoteStats | null> {
  * GetTagsWithCount returns all tags with their usage counts
  */
 export function GetTagsWithCount(): $CancellablePromise<(models$0.TagInfo | null)[]> {
-    return $Call.ByID(505997541).then(($result: any) => {
+    return $Call.ByID(2399370276).then(($result: any) => {
         return $$createType8($result);
     });
 }
@@ -109,7 +137,14 @@ export function GetTagsWithCount(): $CancellablePromise<(models$0.TagInfo | null
  * IsFTSEnabled returns whether FTS5 full-text search is enabled
  */
 export function IsFTSEnabled(): $CancellablePromise<boolean> {
-    return $Call.ByID(639470797);
+    return $Call.ByID(1995927172);
+}
+
+/**
+ * PurgeDeleted physically deletes soft-deleted notes before the given time.
+ */
+export function PurgeDeleted(beforeTime: string): $CancellablePromise<number> {
+    return $Call.ByID(3051525636, beforeTime);
 }
 
 /**
@@ -117,14 +152,28 @@ export function IsFTSEnabled(): $CancellablePromise<boolean> {
  * 用于“清空所有数据，直接删表重建”的场景。
  */
 export function ResetAllData(): $CancellablePromise<void> {
-    return $Call.ByID(364657787);
+    return $Call.ByID(267999646);
+}
+
+/**
+ * Restore restores a soft-deleted note.
+ */
+export function Restore(id: number): $CancellablePromise<void> {
+    return $Call.ByID(1865612182, id);
+}
+
+/**
+ * SaveDraft saves a draft payload for a note (or global when noteID is nil).
+ */
+export function SaveDraft(noteID: number | null, payload: string): $CancellablePromise<void> {
+    return $Call.ByID(91129600, noteID, payload);
 }
 
 /**
  * Search searches notes by query using FTS5
  */
 export function Search(query: string, limit: number): $CancellablePromise<models$0.SearchResult | null> {
-    return $Call.ByID(79364265, query, limit).then(($result: any) => {
+    return $Call.ByID(1885328336, query, limit).then(($result: any) => {
         return $$createType10($result);
     });
 }
@@ -133,16 +182,32 @@ export function Search(query: string, limit: number): $CancellablePromise<models
  * SearchWithHighlight searches notes and returns highlighted snippets
  */
 export function SearchWithHighlight(query: string, limit: number): $CancellablePromise<models$0.SearchResult | null> {
-    return $Call.ByID(4047097295, query, limit).then(($result: any) => {
+    return $Call.ByID(1062822664, query, limit).then(($result: any) => {
         return $$createType10($result);
     });
+}
+
+/**
+ * SetSetting sets a backend settings key/value pair.
+ */
+export function SetSetting(key: string, value: string): $CancellablePromise<void> {
+    return $Call.ByID(3048781216, key, value);
 }
 
 /**
  * Update updates an existing note
  */
 export function Update(id: number, title: string | null, content: string | null, tags: string[] | null): $CancellablePromise<models$0.Note | null> {
-    return $Call.ByID(2895604852, id, title, content, tags).then(($result: any) => {
+    return $Call.ByID(2834942573, id, title, content, tags).then(($result: any) => {
+        return $$createType1($result);
+    });
+}
+
+/**
+ * UpdateWithVersion updates an existing note with optimistic version check.
+ */
+export function UpdateWithVersion(id: number, title: string | null, content: string | null, tags: string[] | null, expectedVersion: number | null): $CancellablePromise<models$0.Note | null> {
+    return $Call.ByID(2703469371, id, title, content, tags, expectedVersion).then(($result: any) => {
         return $$createType1($result);
     });
 }

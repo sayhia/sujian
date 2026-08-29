@@ -23,12 +23,14 @@ func main() {
 
 	noteService := services.NewNoteService(database.GetDB())
 	noteHandler := handlers.NewNoteHandler(noteService)
+	updaterHandler := handlers.NewUpdaterHandler()
 
 	app := application.New(application.Options{
 		Name:        "sujian",
 		Description: "A time capsule note application",
 		Services: []application.Service{
 			application.NewService(noteHandler),
+			application.NewService(updaterHandler),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -38,7 +40,7 @@ func main() {
 		},
 	})
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:            "素笺 Sujian",
 		Width:            1200,
 		Height:           800,
@@ -48,6 +50,8 @@ func main() {
 			TitleBar: application.MacTitleBarHiddenInset,
 		},
 	})
+
+	updaterHandler.SetWindow(window)
 
 	err = app.Run()
 	if err != nil {

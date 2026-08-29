@@ -2,136 +2,88 @@
 
 A time capsule note application built with Wails v3, combining Go backend with Vue.js frontend.
 
-## Default App Routes (2026-03-08)
+**素笺 · 时间的信笺** —— 全新「纸墨 Paper & Ink」设计语言（2026-08-28 完全重构）。
 
-The default app flow is now locked to the Editorial experience:
+## Routes
 
-1. `/` -> Editorial Home
-2. `/notes/new` -> Editorial Editor (quick note mode)
-3. `/notes/new/article` -> Editorial Editor (article mode)
-4. `/notes/:id/edit` -> Editorial Editor (edit mode)
-5. `/settings` -> Editorial Settings
-
-## Editorial Behavior Baseline
-
-1. Home supports keyword/tag/time filtering in the reading stream.
-2. Editor supports route-driven `create/article/edit` save behavior.
-3. Settings values persist to local storage and restore on load.
+| Route | Description |
+|---|---|
+| `/` | Home · time-stream (timeline / grid) |
+| `/notes/new` | Editor · quick note mode |
+| `/notes/new/article` | Editor · article mode |
+| `/notes/:id/edit` | Editor · edit mode |
 
 ## Features
 
-- 📝 **Rich Text Editing**: Support for multiple text formats with TipTap editor
-- ⏳ **Time Capsule**: Create and manage time-based notes
-- 📅 **Timeline View**: Visual timeline to browse notes chronologically
-- 🌍 **Multi-language Support**: Chinese, English, Japanese, Korean
-- 🏷️ **Tag Management**: Organize notes with customizable tags
-- 🎨 **Modern UI**: Clean and intuitive interface built with Tailwind CSS
-- 💾 **Local Storage**: SQLite database for reliable data persistence
+- 📝 **Markdown Editing**: write / preview / split panes, syntax highlighting (highlight.js), outline
+- ⏳ **Time Capsule**: time-grouped timeline (`今天 / 昨天 / 更早`)
+- 🏷️ **Tags**: inline editing, suggestion, count & color-coded filtering
+- 🔍 **Full-text Search**: FTS5 with highlighted snippets + search history (⌘K)
+- 📦 **Archive & Trash**: archive / soft-delete / restore / purge
+- 🎨 **Paper & Ink Theme System**: light/dark × 6 ink palettes, font size, glass, animations
+- 💾 **Local Storage**: SQLite + autosave + draft recovery + JSON import/export
+- 🌍 **i18n**: 中文 / English / 日本語 / 한국어
+- ⌨️ **Shortcuts**: ⌘K · N · ⇧N · G · F · ⌘, · ?
 
 ## Tech Stack
 
-### Backend
-- **Go 1.25**: Core backend language
-- **Wails v3**: Cross-platform desktop application framework
-- **SQLite**: Embedded database
-
-### Frontend
-- **Vue 3**: Progressive JavaScript framework
-- **TypeScript**: Type-safe development
-- **Vite**: Build tool and development server
-- **Tailwind CSS**: Utility-first CSS framework
-- **TipTap**: Rich text editor
-- **Pinia**: State management
-- **Vue Router**: Routing
-- **Vue I18n**: Internationalization
+- **Backend**: Go 1.25 · Wails v3 · SQLite (FTS5)
+- **Frontend**: Vue 3 · TypeScript · Vite · Pinia · Vue Router · marked · highlight.js
 
 ## Project Structure
 
 ```
 sujian/
-├── frontend/               # Vue.js frontend
-│   ├── src/
-│   │   ├── components/     # Vue components
-│   │   ├── composables/    # Reusable composition functions
-│   │   ├── language/       # i18n translations
-│   │   ├── stores/         # Pinia stores
-│   │   └── types/          # TypeScript definitions
-│   └── package.json
-├── handlers/               # Go HTTP handlers
-├── models/                 # Go data models
-├── services/               # Business logic
-├── db/                     # Database setup
-├── build/                  # Build scripts and configs
-└── main.go                 # Application entry point
+├── backend/                  # Go backend
+│   ├── models/               # data models & typed errors
+│   ├── db/                   # SQLite + migrations + FTS5
+│   ├── services/             # business logic
+│   └── handlers/             # Wails service handlers
+├── frontend/
+│   ├── bindings/             # generated Wails bindings (do not edit)
+│   └── src/
+│       ├── styles/           # tokens.css · themes.css · base.css (design system)
+│       ├── services/         # API layer over bindings
+│       ├── stores/           # Pinia: notes · ui · settings
+│       ├── composables/      # markdown · dates · tags · shortcuts · feedback
+│       ├── components/
+│       │   ├── ui/           # base components (Button/Modal/Toast/Drawer…)
+│       │   ├── layout/       # AppHeader / AppSidebar
+│       │   ├── notes/        # NoteCard / Timeline / Grid / FilterBar
+│       │   ├── search/       # SearchPalette
+│       │   ├── editor/       # Toolbar / Textarea / MarkdownViewer / TagEditor
+│       │   └── settings/     # Appearance / Preference / Data / About
+│       └── views/            # HomeView / EditorView
+├── docs/plans/               # design & implementation docs
+└── build/                    # build scripts & configs
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Go 1.25 or higher
-- Node.js 18 or higher
-- Task (taskfile) for build automation
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/sujian.git
-cd sujian
-```
-
-2. Install dependencies:
-```bash
-npm install
-cd frontend && npm install && cd ..
-```
+- Go 1.25+
+- Node.js 18+
+- Task (taskfile)
 
 ### Development
 
-Run the application in development mode:
 ```bash
-task dev
+task dev        # wails3 dev (Vite at :9245)
 ```
 
-This will start:
-- Go backend with hot reload
-- Vite dev server (default port: 9245)
-- Auto-open the application window
+### Build
 
-### Building
-
-Build for your current platform:
 ```bash
-task build
+task build      # build current platform
+task package    # package production build
 ```
 
-Package for production:
-```bash
-task package
-```
+## Design System
 
-## Available Commands
-
-| Command | Description |
-|---------|-------------|
-| `task dev` | Run in development mode |
-| `task run` | Run the application |
-| `task build` | Build the application |
-| `task package` | Package production build |
-
-## Components
-
-- **Editor**: Main note editing interface
-- **Timeline**: Chronological note viewer
-- **NoteCapsule**: Time capsule feature
-- **SettingsPanel**: Application settings
-- **ArticleEditor**: Rich text editor component
+Design tokens live in `frontend/src/styles/tokens.css` (colors / spacing / radius / shadow / motion).
+Theme switching (`themes.css`) is driven by `<html data-theme data-accent>` attributes — zero reload, no flicker.
 
 ## License
 
 MIT License
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.

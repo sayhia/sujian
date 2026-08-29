@@ -4,32 +4,29 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: () => import('../views/demo/editorial/EditorialHomeDemo.vue'),
-    meta: { appStyle: 'editorial' },
+    component: () => import('../views/HomeView.vue'),
   },
   {
     path: '/notes/new',
-    name: 'newNote',
-    component: () => import('../views/demo/editorial/EditorialEditorDemo.vue'),
-    meta: { mode: 'create', appStyle: 'editorial' },
+    name: 'newQuick',
+    component: () => import('../views/EditorView.vue'),
+    meta: { mode: 'create' },
   },
   {
     path: '/notes/new/article',
     name: 'newArticle',
-    component: () => import('../views/demo/editorial/EditorialEditorDemo.vue'),
-    meta: { mode: 'create', type: 'article', appStyle: 'editorial' },
+    component: () => import('../views/EditorView.vue'),
+    meta: { mode: 'create', type: 'article' },
   },
   {
     path: '/notes/:id/edit',
     name: 'editNote',
-    component: () => import('../views/demo/editorial/EditorialEditorDemo.vue'),
-    meta: { mode: 'edit', appStyle: 'editorial' },
+    component: () => import('../views/EditorView.vue'),
+    meta: { mode: 'edit' },
   },
   {
-    path: '/settings',
-    name: 'settings',
-    component: () => import('../views/demo/editorial/EditorialSettingsDemo.vue'),
-    meta: { appStyle: 'editorial' },
+    path: '/:pathMatch(.*)*',
+    redirect: '/',
   },
 ];
 

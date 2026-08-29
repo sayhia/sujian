@@ -3,7 +3,9 @@ package services
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -11,59 +13,115 @@ import (
 	"sujian/backend/models"
 )
 
+// 分页常量：统一列表语义
+const (
+	defaultPageSize = 50
+	maxPageSize     = 200
+)
+
+// NoteService 提供笔记、设置与草稿的领域逻辑。
 type NoteService struct {
 	db         *sql.DB
 	ftsEnabled bool
 }
 
+// NewNoteService 创建服务并探测 FTS5 可用性。
 func NewNoteService(db *sql.DB) *NoteService {
 	service := &NoteService{db: db}
 	service.checkFTSEnabled()
 	return service
 }
 
-// checkFTSEnabled checks if FTS5 is available
+// checkFTSEnabled 探测 notes_fts 虚拟表是否可用。
 func (s *NoteService) checkFTSEnabled() {
 	var name string
 	err := s.db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='notes_fts'").Scan(&name)
 	s.ftsEnabled = err == nil && name == "notes_fts"
 	if s.ftsEnabled {
-		fmt.Println("FTS5 full-text search enabled")
+		log.Println("FTS5 full-text search enabled")
 	}
 }
 
-// Create creates a new note
-func (s *NoteService) Create(req *models.CreateNoteRequest) (*models.Note, error) {
-	now := time.Now()
+// normalizePageSize 规整分页参数：limit<=0 取默认，超过上限截断。
+func normalizePageSize(limit int) int {
+	if limit <= 0 {
+		return defaultPageSize
+	}
+	if limit > maxPageSize {
+		return maxPageSize
+	}
+	return limit
+}
 
-	// Ensure tags is not nil
+// errNotFound 构造统一的 not_found 错误。
+func errNotFound(what string) error {
+	return models.NewAppError(models.ErrorKindNotFound, what, nil)
+}
+
+// errStorage 包装存储层错误。
+func errStorage(msg string, err error) error {
+	return models.NewAppError(models.ErrorKindStorage, msg, err)
+}
+
+// errInvalid 构造校验错误。
+func errInvalid(msg string) error {
+	return models.NewAppError(models.ErrorKindValidation, msg, nil)
+}
+
+// scanNote 从一行查询结果扫描并解析 Note（tags JSON、type 兜底）。
+func scanNote(scanner interface{ Scan(...any) error }) (*models.Note, error) {
+	note := &models.Note{}
+	var tagsJSON sql.NullString
+	var typeStr sql.NullString
+	if err := scanner.Scan(
+		&note.ID, &note.Title, &note.Content, &tagsJSON, &typeStr,
+		&note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted,
+	); err != nil {
+		return nil, err
+	}
+	note.Tags = []string{}
+	if tagsJSON.Valid && tagsJSON.String != "" {
+		_ = json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
+	}
+	if typeStr.Valid && typeStr.String != "" {
+		note.Type = models.NoteType(typeStr.String)
+	} else {
+		note.Type = models.NoteTypeQuick
+	}
+	return note, nil
+}
+
+// Create 创建一条新笔记。
+func (s *NoteService) Create(req *models.CreateNoteRequest) (*models.Note, error) {
 	tags := req.Tags
 	if tags == nil {
 		tags = []string{}
 	}
-
-	// Default to "quick" if type is empty
 	noteType := req.Type
 	if noteType == "" {
 		noteType = models.NoteTypeQuick
 	}
+	if !isValidNoteType(noteType) {
+		return nil, errInvalid(fmt.Sprintf("unsupported note type: %q", noteType))
+	}
 
 	tagsJSON, err := json.Marshal(tags)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal tags: %w", err)
+		return nil, errStorage("failed to marshal tags", err)
 	}
 
+	now := time.Now()
 	result, err := s.db.Exec(`
 		INSERT INTO notes (title, content, tags, type, created_at, updated_at, is_archived, is_deleted)
 		VALUES (?, ?, ?, ?, ?, ?, 0, 0)
 	`, req.Title, req.Content, tagsJSON, string(noteType), now, now)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert note: %w", err)
+		return nil, errStorage("failed to insert note", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get last insert id: %w", err)
+		return nil, errStorage("failed to get last insert id", err)
 	}
 
 	return &models.Note{
@@ -79,116 +137,93 @@ func (s *NoteService) Create(req *models.CreateNoteRequest) (*models.Note, error
 	}, nil
 }
 
-// GetByID retrieves a note by ID
-func (s *NoteService) GetByID(id int64) (*models.Note, error) {
-	note := &models.Note{}
+func isValidNoteType(t models.NoteType) bool {
+	return t == models.NoteTypeQuick || t == models.NoteTypeArticle
+}
 
-	var tagsJSON sql.NullString
-	var noteType string
-	err := s.db.QueryRow(`
+// GetByID 按 ID 获取未删除的笔记。
+func (s *NoteService) GetByID(id int64) (*models.Note, error) {
+	note, err := scanNote(s.db.QueryRow(`
 		SELECT id, title, content, tags, type, created_at, updated_at, is_archived, is_deleted
 		FROM notes WHERE id = ? AND is_deleted = 0
-	`, id).Scan(&note.ID, &note.Title, &note.Content, &tagsJSON, &noteType, &note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted)
-
+	`, id))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("note not found")
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errNotFound("note not found")
 		}
-		return nil, fmt.Errorf("failed to get note: %w", err)
+		return nil, errStorage("failed to get note", err)
 	}
-
-	note.Tags = []string{}
-	if tagsJSON.Valid && tagsJSON.String != "" {
-		json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
-	}
-
-	note.Type = models.NoteType(noteType)
-
 	return note, nil
 }
 
-// GetAll retrieves all notes with optional filters
-func (s *NoteService) GetAll(req *models.GetNotesRequest) ([]*models.Note, error) {
-	query := `
-		SELECT id, title, content, tags, type, created_at, updated_at, is_archived, is_deleted
-		FROM notes WHERE is_deleted = 0
-	`
-	args := []interface{}{}
+// buildListQuery 构造列表查询 SQL 与参数（FTS / LIKE 统一收敛）。
+func (s *NoteService) buildListQuery(req *models.GetNotesRequest) (string, []interface{}) {
+	useFTS := s.ftsEnabled && req.Search != ""
 
-	// Filter by tags
-	if len(req.Tags) > 0 {
+	if useFTS {
+		query := `
+			SELECT n.id, n.title, n.content, n.tags, n.type, n.created_at, n.updated_at, n.is_archived, n.is_deleted
+			FROM notes n
+			INNER JOIN notes_fts fts ON n.id = fts.rowid
+			WHERE n.is_deleted = 0 AND notes_fts MATCH ?`
+		args := []interface{}{s.buildFTSQuery(req.Search)}
 		for _, tag := range req.Tags {
-			query += " AND tags LIKE ?"
+			query += " AND n.tags LIKE ?"
 			args = append(args, "%\""+tag+"\"%")
 		}
-	}
-
-	// Filter by search query (use FTS if available, otherwise LIKE)
-	if req.Search != "" {
-		if s.ftsEnabled {
-			// Use FTS5 for search
-			query = `
-				SELECT n.id, n.title, n.content, n.tags, n.type, n.created_at, n.updated_at, n.is_archived, n.is_deleted
-				FROM notes n
-				INNER JOIN notes_fts fts ON n.id = fts.rowid
-				WHERE n.is_deleted = 0 AND notes_fts MATCH ?
-			`
-			args = []interface{}{s.buildFTSQuery(req.Search)}
-
-			// Re-add tag filters
-			if len(req.Tags) > 0 {
-				for _, tag := range req.Tags {
-					query += " AND n.tags LIKE ?"
-					args = append(args, "%\""+tag+"\"%")
-				}
-			}
-		} else {
-			query += " AND (title LIKE ? OR content LIKE ?)"
-			searchPattern := "%" + req.Search + "%"
-			args = append(args, searchPattern, searchPattern)
-		}
-	}
-
-	// Filter by time range
-	if req.StartTime != nil && *req.StartTime != "" {
-		if s.ftsEnabled && req.Search != "" {
+		if req.StartTime != nil && *req.StartTime != "" {
 			query += " AND n.created_at >= ?"
-		} else {
-			query += " AND created_at >= ?"
+			args = append(args, *req.StartTime)
 		}
+		if req.EndTime != nil && *req.EndTime != "" {
+			query += " AND n.created_at <= ?"
+			args = append(args, *req.EndTime)
+		}
+		if req.Archived != nil {
+			query += " AND n.is_archived = ?"
+			args = append(args, *req.Archived)
+		}
+		query += " ORDER BY rank, n.created_at DESC"
+		return query, args
+	}
+
+	query := `
+		SELECT id, title, content, tags, type, created_at, updated_at, is_archived, is_deleted
+		FROM notes WHERE is_deleted = 0`
+	args := []interface{}{}
+
+	for _, tag := range req.Tags {
+		query += " AND tags LIKE ?"
+		args = append(args, "%\""+tag+"\"%")
+	}
+	if req.Search != "" {
+		pattern := "%" + req.Search + "%"
+		query += " AND (title LIKE ? OR content LIKE ?)"
+		args = append(args, pattern, pattern)
+	}
+	if req.StartTime != nil && *req.StartTime != "" {
+		query += " AND created_at >= ?"
 		args = append(args, *req.StartTime)
 	}
-
 	if req.EndTime != nil && *req.EndTime != "" {
-		if s.ftsEnabled && req.Search != "" {
-			query += " AND n.created_at <= ?"
-		} else {
-			query += " AND created_at <= ?"
-		}
+		query += " AND created_at <= ?"
 		args = append(args, *req.EndTime)
 	}
-
-	// Filter by archived status
 	if req.Archived != nil {
-		if s.ftsEnabled && req.Search != "" {
-			query += " AND n.is_archived = ?"
-		} else {
-			query += " AND is_archived = ?"
-		}
+		query += " AND is_archived = ?"
 		args = append(args, *req.Archived)
 	}
+	query += " ORDER BY created_at DESC"
+	return query, args
+}
 
-	// Order by
-	if s.ftsEnabled && req.Search != "" {
-		query += " ORDER BY rank, n.created_at DESC"
-	} else {
-		query += " ORDER BY created_at DESC"
-	}
+// GetAll 按过滤条件分页获取笔记。
+func (s *NoteService) GetAll(req *models.GetNotesRequest) ([]*models.Note, error) {
+	query, args := s.buildListQuery(req)
 
-	// Apply pagination
-	if req.Limit > 0 {
+	if limit := normalizePageSize(req.Limit); limit > 0 {
 		query += " LIMIT ?"
-		args = append(args, req.Limit)
+		args = append(args, limit)
 	}
 	if req.Offset > 0 {
 		query += " OFFSET ?"
@@ -197,24 +232,97 @@ func (s *NoteService) GetAll(req *models.GetNotesRequest) ([]*models.Note, error
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query notes: %w", err)
+		return nil, errStorage("failed to query notes", err)
 	}
 	defer rows.Close()
 
 	notes := []*models.Note{}
 	for rows.Next() {
+		note, err := scanNote(rows)
+		if err != nil {
+			return nil, errStorage("failed to scan note", err)
+		}
+		notes = append(notes, note)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errStorage("failed to iterate notes", err)
+	}
+	return notes, nil
+}
+
+// buildFTSQuery 将用户查询拆词并构造 FTS5 前缀匹配表达式。
+func (s *NoteService) buildFTSQuery(query string) string {
+	words := strings.Fields(query)
+	if len(words) == 0 {
+		return query
+	}
+	parts := make([]string, len(words))
+	for i, word := range words {
+		escaped := strings.ReplaceAll(word, "\"", "\"\"")
+		parts[i] = fmt.Sprintf("\"%s\"*", escaped)
+	}
+	return strings.Join(parts, " ")
+}
+
+// Search 使用 FTS5（或 LIKE 兜底）搜索未归档笔记。
+func (s *NoteService) Search(query string, limit int) (*models.SearchResult, error) {
+	limit = normalizePageSize(limit)
+	if !s.ftsEnabled {
+		return s.searchWithLike(query, limit)
+	}
+
+	ftsQuery := s.buildFTSQuery(query)
+	sqlQuery := `
+		SELECT n.id, n.title, n.content, n.tags, n.type, n.created_at, n.updated_at, n.is_archived, n.is_deleted,
+			   bm25(notes_fts, 10.0, 5.0, 1.0) as rank
+		FROM notes n
+		INNER JOIN notes_fts fts ON n.id = fts.rowid
+		WHERE n.is_deleted = 0 AND n.is_archived = 0 AND notes_fts MATCH ?
+		ORDER BY rank
+		LIMIT ?`
+	rows, err := s.db.Query(sqlQuery, ftsQuery, limit+1)
+	if err != nil {
+		return s.searchWithLike(query, limit)
+	}
+	defer rows.Close()
+
+	notes, err := s.collectSearchRows(rows, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var total int
+	_ = s.db.QueryRow(`
+		SELECT COUNT(*)
+		FROM notes n
+		INNER JOIN notes_fts fts ON n.id = fts.rowid
+		WHERE n.is_deleted = 0 AND n.is_archived = 0 AND notes_fts MATCH ?
+	`, ftsQuery).Scan(&total)
+	if total == 0 {
+		total = len(notes)
+	}
+
+	return &models.SearchResult{Notes: notes, Total: total, HasMore: len(notes) > limit}, nil
+}
+
+// collectSearchRows 读取搜索行（额外 rank 列）并做 hasMore 截断。
+func (s *NoteService) collectSearchRows(rows *sql.Rows, limit int) ([]*models.Note, error) {
+	notes := []*models.Note{}
+	for rows.Next() {
 		note := &models.Note{}
 		var tagsJSON sql.NullString
 		var typeStr sql.NullString
-		err := rows.Scan(&note.ID, &note.Title, &note.Content, &tagsJSON, &typeStr, &note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan note: %w", err)
+		var rank float64
+		if err := rows.Scan(
+			&note.ID, &note.Title, &note.Content, &tagsJSON, &typeStr,
+			&note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted, &rank,
+		); err != nil {
+			return nil, errStorage("failed to scan note", err)
 		}
 		note.Tags = []string{}
 		if tagsJSON.Valid && tagsJSON.String != "" {
-			json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
+			_ = json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
 		}
-		// Default to "quick" if type is empty
 		if typeStr.Valid && typeStr.String != "" {
 			note.Type = models.NoteType(typeStr.String)
 		} else {
@@ -222,140 +330,41 @@ func (s *NoteService) GetAll(req *models.GetNotesRequest) ([]*models.Note, error
 		}
 		notes = append(notes, note)
 	}
-
+	if len(notes) > limit {
+		notes = notes[:limit]
+	}
 	return notes, nil
 }
 
-// buildFTSQuery builds an FTS5 query string
-func (s *NoteService) buildFTSQuery(query string) string {
-	// Split query into words and create FTS5 query
-	words := strings.Fields(query)
-	if len(words) == 0 {
-		return query
-	}
-
-	// Build query with prefix matching for each word
-	parts := make([]string, len(words))
-	for i, word := range words {
-		// Escape special FTS5 characters
-		escaped := strings.ReplaceAll(word, "\"", "\"\"")
-		// Use prefix matching (word*) for partial matches
-		parts[i] = fmt.Sprintf("\"%s\"*", escaped)
-	}
-
-	// Join with implicit AND
-	return strings.Join(parts, " ")
-}
-
-// Search searches notes by query using FTS5
-func (s *NoteService) Search(query string, limit int) (*models.SearchResult, error) {
-	if limit <= 0 {
-		limit = 20
-	}
-
-	var notes []*models.Note
-	var total int
-
-	if s.ftsEnabled {
-		// Use FTS5 for searching
-		ftsQuery := s.buildFTSQuery(query)
-
-		sqlQuery := `
-			SELECT n.id, n.title, n.content, n.tags, n.created_at, n.updated_at, n.is_archived, n.is_deleted,
-				   bm25(notes_fts, 10.0, 5.0, 1.0) as rank
-			FROM notes n
-			INNER JOIN notes_fts fts ON n.id = fts.rowid
-			WHERE n.is_deleted = 0 AND n.is_archived = 0 AND notes_fts MATCH ?
-			ORDER BY rank
-			LIMIT ?
-		`
-
-		rows, err := s.db.Query(sqlQuery, ftsQuery, limit+1)
-		if err != nil {
-			// Fallback to LIKE search if FTS fails
-			return s.searchWithLike(query, limit)
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			note := &models.Note{}
-			var tagsJSON sql.NullString
-			var rank float64
-			err := rows.Scan(&note.ID, &note.Title, &note.Content, &tagsJSON, &note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted, &rank)
-			if err != nil {
-				return nil, fmt.Errorf("failed to scan note: %w", err)
-			}
-			note.Tags = []string{}
-			if tagsJSON.Valid && tagsJSON.String != "" {
-				json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
-			}
-			notes = append(notes, note)
-		}
-
-		// Get total count
-		countQuery := `
-			SELECT COUNT(*)
-			FROM notes n
-			INNER JOIN notes_fts fts ON n.id = fts.rowid
-			WHERE n.is_deleted = 0 AND n.is_archived = 0 AND notes_fts MATCH ?
-		`
-		s.db.QueryRow(countQuery, ftsQuery).Scan(&total)
-	} else {
-		return s.searchWithLike(query, limit)
-	}
-
-	hasMore := len(notes) > limit
-	if hasMore {
-		notes = notes[:limit]
-	}
-
-	if total == 0 {
-		total = len(notes)
-	}
-
-	return &models.SearchResult{
-		Notes:   notes,
-		Total:   total,
-		HasMore: hasMore,
-	}, nil
-}
-
-// searchWithLike is a fallback search using LIKE
+// searchWithLike 是无 FTS 时的 LIKE 兜底搜索。
 func (s *NoteService) searchWithLike(query string, limit int) (*models.SearchResult, error) {
-	searchPattern := "%" + query + "%"
+	limit = normalizePageSize(limit)
+	pattern := "%" + query + "%"
 
 	sqlQuery := `
-		SELECT id, title, content, tags, created_at, updated_at, is_archived, is_deleted
-		FROM notes 
+		SELECT id, title, content, tags, type, created_at, updated_at, is_archived, is_deleted
+		FROM notes
 		WHERE is_deleted = 0 AND is_archived = 0
 		AND (title LIKE ? OR content LIKE ? OR tags LIKE ?)
-		ORDER BY 
-			CASE 
+		ORDER BY
+			CASE
 				WHEN title LIKE ? THEN 1
 				WHEN content LIKE ? THEN 2
 				ELSE 3
 			END,
 			created_at DESC
-		LIMIT ?
-	`
-
-	rows, err := s.db.Query(sqlQuery, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, limit+1)
+		LIMIT ?`
+	rows, err := s.db.Query(sqlQuery, pattern, pattern, pattern, pattern, pattern, limit+1)
 	if err != nil {
-		return nil, fmt.Errorf("failed to search notes: %w", err)
+		return nil, errStorage("failed to search notes", err)
 	}
 	defer rows.Close()
 
 	notes := []*models.Note{}
 	for rows.Next() {
-		note := &models.Note{}
-		var tagsJSON sql.NullString
-		err := rows.Scan(&note.ID, &note.Title, &note.Content, &tagsJSON, &note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted)
+		note, err := scanNote(rows)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan note: %w", err)
-		}
-		note.Tags = []string{}
-		if tagsJSON.Valid && tagsJSON.String != "" {
-			json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
+			return nil, errStorage("failed to scan note", err)
 		}
 		notes = append(notes, note)
 	}
@@ -365,47 +374,35 @@ func (s *NoteService) searchWithLike(query string, limit int) (*models.SearchRes
 		notes = notes[:limit]
 	}
 
-	// Get total count
 	var total int
-	s.db.QueryRow(`
-		SELECT COUNT(*) FROM notes 
+	_ = s.db.QueryRow(`
+		SELECT COUNT(*) FROM notes
 		WHERE is_deleted = 0 AND is_archived = 0
 		AND (title LIKE ? OR content LIKE ? OR tags LIKE ?)
-	`, searchPattern, searchPattern, searchPattern).Scan(&total)
+	`, pattern, pattern, pattern).Scan(&total)
 
-	return &models.SearchResult{
-		Notes:   notes,
-		Total:   total,
-		HasMore: hasMore,
-	}, nil
+	return &models.SearchResult{Notes: notes, Total: total, HasMore: hasMore}, nil
 }
 
-// SearchWithHighlight searches and returns highlighted snippets
+// SearchWithHighlight 搜索并返回带 <mark> 高亮的摘要（无 FTS 时回退普通搜索）。
 func (s *NoteService) SearchWithHighlight(query string, limit int) (*models.SearchResult, error) {
 	if !s.ftsEnabled {
 		return s.Search(query, limit)
 	}
-
-	if limit <= 0 {
-		limit = 20
-	}
-
+	limit = normalizePageSize(limit)
 	ftsQuery := s.buildFTSQuery(query)
 
-	// Use highlight() function for matched text
 	sqlQuery := `
-		SELECT n.id, 
+		SELECT n.id,
 			   highlight(notes_fts, 0, '<mark>', '</mark>') as title,
 			   snippet(notes_fts, 1, '<mark>', '</mark>', '...', 64) as content,
-			   n.tags, n.created_at, n.updated_at, n.is_archived, n.is_deleted,
+			   n.tags, n.type, n.created_at, n.updated_at, n.is_archived, n.is_deleted,
 			   bm25(notes_fts, 10.0, 5.0, 1.0) as rank
 		FROM notes n
 		INNER JOIN notes_fts fts ON n.id = fts.rowid
 		WHERE n.is_deleted = 0 AND n.is_archived = 0 AND notes_fts MATCH ?
 		ORDER BY rank
-		LIMIT ?
-	`
-
+		LIMIT ?`
 	rows, err := s.db.Query(sqlQuery, ftsQuery, limit+1)
 	if err != nil {
 		return s.Search(query, limit)
@@ -416,14 +413,22 @@ func (s *NoteService) SearchWithHighlight(query string, limit int) (*models.Sear
 	for rows.Next() {
 		note := &models.Note{}
 		var tagsJSON sql.NullString
+		var typeStr sql.NullString
 		var rank float64
-		err := rows.Scan(&note.ID, &note.Title, &note.Content, &tagsJSON, &note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted, &rank)
-		if err != nil {
+		if err := rows.Scan(
+			&note.ID, &note.Title, &note.Content, &tagsJSON, &typeStr,
+			&note.CreatedAt, &note.UpdatedAt, &note.IsArchived, &note.IsDeleted, &rank,
+		); err != nil {
 			continue
 		}
 		note.Tags = []string{}
 		if tagsJSON.Valid && tagsJSON.String != "" {
-			json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
+			_ = json.Unmarshal([]byte(tagsJSON.String), &note.Tags)
+		}
+		if typeStr.Valid && typeStr.String != "" {
+			note.Type = models.NoteType(typeStr.String)
+		} else {
+			note.Type = models.NoteTypeQuick
 		}
 		notes = append(notes, note)
 	}
@@ -434,21 +439,17 @@ func (s *NoteService) SearchWithHighlight(query string, limit int) (*models.Sear
 	}
 
 	var total int
-	s.db.QueryRow(`
+	_ = s.db.QueryRow(`
 		SELECT COUNT(*)
 		FROM notes n
 		INNER JOIN notes_fts fts ON n.id = fts.rowid
 		WHERE n.is_deleted = 0 AND n.is_archived = 0 AND notes_fts MATCH ?
 	`, ftsQuery).Scan(&total)
 
-	return &models.SearchResult{
-		Notes:   notes,
-		Total:   total,
-		HasMore: hasMore,
-	}, nil
+	return &models.SearchResult{Notes: notes, Total: total, HasMore: hasMore}, nil
 }
 
-// Update updates an existing note
+// Update 更新笔记字段（部分更新 + 可选乐观锁版本校验）。
 func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error) {
 	updates := []string{}
 	args := []interface{}{}
@@ -457,16 +458,14 @@ func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error
 		updates = append(updates, "title = ?")
 		args = append(args, *req.Title)
 	}
-
 	if req.Content != nil {
 		updates = append(updates, "content = ?")
 		args = append(args, *req.Content)
 	}
-
 	if req.Tags != nil {
 		tagsJSON, err := json.Marshal(*req.Tags)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal tags: %w", err)
+			return nil, errStorage("failed to marshal tags", err)
 		}
 		updates = append(updates, "tags = ?")
 		args = append(args, tagsJSON)
@@ -476,11 +475,9 @@ func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error
 		return s.GetByID(req.ID)
 	}
 
-	updates = append(updates, "updated_at = ?")
-	args = append(args, time.Now())
-	updates = append(updates, "version = version + 1")
+	updates = append(updates, "updated_at = ?", "version = version + 1")
+	args = append(args, time.Now(), req.ID)
 
-	args = append(args, req.ID)
 	query := fmt.Sprintf("UPDATE notes SET %s WHERE id = ? AND is_deleted = 0", strings.Join(updates, ", "))
 	if req.ExpectedVersion != nil {
 		query += " AND version = ?"
@@ -489,12 +486,11 @@ func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error
 
 	result, err := s.db.Exec(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update note: %w", err)
+		return nil, errStorage("failed to update note", err)
 	}
-
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get affected rows: %w", err)
+		return nil, errStorage("failed to get affected rows", err)
 	}
 
 	if affected == 0 {
@@ -504,107 +500,108 @@ func (s *NoteService) Update(req *models.UpdateNoteRequest) (*models.Note, error
 				return nil, models.NewAppError(models.ErrorKindConflict, "note version mismatch", nil)
 			}
 		}
-		return nil, models.NewAppError(models.ErrorKindNotFound, "note not found", nil)
+		return nil, errNotFound("note not found")
 	}
-
 	return s.GetByID(req.ID)
 }
 
-// Delete soft deletes a note
+// Delete 软删除一条笔记。
 func (s *NoteService) Delete(id int64) error {
 	result, err := s.db.Exec("UPDATE notes SET is_deleted = 1, updated_at = ? WHERE id = ?", time.Now(), id)
 	if err != nil {
-		return fmt.Errorf("failed to delete note: %w", err)
+		return errStorage("failed to delete note", err)
 	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
+	if affected, err := result.RowsAffected(); err != nil {
+		return errStorage("failed to get affected rows", err)
+	} else if affected == 0 {
+		return errNotFound("note not found")
 	}
-
-	if affected == 0 {
-		return fmt.Errorf("note not found")
-	}
-
 	return nil
 }
 
-// Archive archives or unarchives a note
+// Restore 恢复一条已软删除的笔记。
+func (s *NoteService) Restore(id int64) error {
+	result, err := s.db.Exec("UPDATE notes SET is_deleted = 0, updated_at = ? WHERE id = ? AND is_deleted = 1", time.Now(), id)
+	if err != nil {
+		return errStorage("failed to restore note", err)
+	}
+	if affected, err := result.RowsAffected(); err != nil {
+		return errStorage("failed to get affected rows", err)
+	} else if affected == 0 {
+		return errNotFound("note not found")
+	}
+	return nil
+}
+
+// Archive 归档或取消归档一条笔记。
 func (s *NoteService) Archive(id int64, archive bool) error {
 	result, err := s.db.Exec("UPDATE notes SET is_archived = ?, updated_at = ? WHERE id = ? AND is_deleted = 0", archive, time.Now(), id)
 	if err != nil {
-		return fmt.Errorf("failed to archive note: %w", err)
+		return errStorage("failed to archive note", err)
 	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
+	if affected, err := result.RowsAffected(); err != nil {
+		return errStorage("failed to get affected rows", err)
+	} else if affected == 0 {
+		return errNotFound("note not found")
 	}
-
-	if affected == 0 {
-		return fmt.Errorf("note not found")
-	}
-
 	return nil
 }
 
-// GetStats returns statistics about notes
+// GetStats 返回笔记统计信息。
 func (s *NoteService) GetStats() (*models.NoteStats, error) {
 	stats := &models.NoteStats{}
-
-	// Get total notes count
-	err := s.db.QueryRow("SELECT COUNT(*) FROM notes WHERE is_deleted = 0").Scan(&stats.TotalNotes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get total notes: %w", err)
-	}
-
-	// Get active notes count
-	err = s.db.QueryRow("SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND is_archived = 0").Scan(&stats.ActiveNotes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get active notes: %w", err)
-	}
-
-	// Get archived notes count
-	err = s.db.QueryRow("SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND is_archived = 1").Scan(&stats.ArchivedNotes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get archived notes: %w", err)
-	}
-
-	// Get weekly count
 	weekAgo := time.Now().AddDate(0, 0, -7)
-	err = s.db.QueryRow("SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND created_at >= ?", weekAgo).Scan(&stats.WeeklyCount)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get weekly count: %w", err)
-	}
-
-	// Get monthly count
 	monthAgo := time.Now().AddDate(0, -1, 0)
-	err = s.db.QueryRow("SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND created_at >= ?", monthAgo).Scan(&stats.MonthlyCount)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get monthly count: %w", err)
+
+	queries := []struct {
+		sql  string
+		dest *int
+	}{
+		{"SELECT COUNT(*) FROM notes WHERE is_deleted = 0", &stats.TotalNotes},
+		{"SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND is_archived = 0", &stats.ActiveNotes},
+		{"SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND is_archived = 1", &stats.ArchivedNotes},
+		{"SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND created_at >= ?", &stats.WeeklyCount},
+		{"SELECT COUNT(*) FROM notes WHERE is_deleted = 0 AND created_at >= ?", &stats.MonthlyCount},
+	}
+	for i, q := range queries {
+		if i >= 3 {
+			t := weekAgo
+			if i == 4 {
+				t = monthAgo
+			}
+			if err := s.db.QueryRow(q.sql, t).Scan(q.dest); err != nil {
+				return nil, errStorage("failed to compute stats", err)
+			}
+			continue
+		}
+		if err := s.db.QueryRow(q.sql).Scan(q.dest); err != nil {
+			return nil, errStorage("failed to compute stats", err)
+		}
 	}
 
-	// Get all unique tags
 	stats.AllTags = s.getAllTags()
-
 	return stats, nil
 }
 
-// GetAllTags returns all unique tags
+// GetAllTags 返回全部去重标签名。
 func (s *NoteService) GetAllTags() []string {
 	return s.getAllTags()
 }
 
 func (s *NoteService) getAllTags() []string {
-	tagInfos := s.getTagsWithCount()
-	tags := make([]string, len(tagInfos))
-	for i, info := range tagInfos {
+	infos := s.getTagsWithCount()
+	tags := make([]string, len(infos))
+	for i, info := range infos {
 		tags[i] = info.Name
 	}
 	return tags
 }
 
-// getTagsWithCount returns all tags with their usage counts, sorted by frequency
+// GetTagsWithCount 返回标签及使用次数（按频率降序、名称升序）。
+func (s *NoteService) GetTagsWithCount() []*models.TagInfo {
+	return s.getTagsWithCount()
+}
+
 func (s *NoteService) getTagsWithCount() []*models.TagInfo {
 	rows, err := s.db.Query("SELECT tags FROM notes WHERE is_deleted = 0 AND tags IS NOT NULL AND tags != '' AND tags != '[]'")
 	if err != nil {
@@ -629,190 +626,70 @@ func (s *NoteService) getTagsWithCount() []*models.TagInfo {
 		}
 	}
 
-	// Convert to slice and sort by count (descending), then by name (ascending)
-	tagInfos := make([]*models.TagInfo, 0, len(tagCount))
+	infos := make([]*models.TagInfo, 0, len(tagCount))
 	for name, count := range tagCount {
-		tagInfos = append(tagInfos, &models.TagInfo{
-			Name:  name,
-			Count: count,
-		})
+		infos = append(infos, &models.TagInfo{Name: name, Count: count})
 	}
 
-	// Sort: first by count (descending), then by name (ascending)
-	for i := 0; i < len(tagInfos); i++ {
-		for j := i + 1; j < len(tagInfos); j++ {
-			if tagInfos[i].Count < tagInfos[j].Count ||
-				(tagInfos[i].Count == tagInfos[j].Count && tagInfos[i].Name > tagInfos[j].Name) {
-				tagInfos[i], tagInfos[j] = tagInfos[j], tagInfos[i]
+	// 排序：计数降序，其次名称升序
+	for i := 0; i < len(infos); i++ {
+		for j := i + 1; j < len(infos); j++ {
+			if infos[i].Count < infos[j].Count ||
+				(infos[i].Count == infos[j].Count && infos[i].Name > infos[j].Name) {
+				infos[i], infos[j] = infos[j], infos[i]
 			}
 		}
 	}
-
-	return tagInfos
+	return infos
 }
 
-// GetTagsWithCount returns all tags with usage counts
-func (s *NoteService) GetTagsWithCount() []*models.TagInfo {
-	return s.getTagsWithCount()
-}
-
-// BatchDelete deletes multiple notes
+// BatchDelete 物理删除多条笔记（用于清空/彻底移除，FTS 触发器同步索引）。
 func (s *NoteService) BatchDelete(ids []int64) (int, error) {
 	if len(ids) == 0 {
 		return 0, nil
 	}
-
-	placeholders := make([]string, len(ids))
+	placeholders := strings.Repeat("?,", len(ids))
+	placeholders = placeholders[:len(placeholders)-1]
 	args := make([]interface{}, len(ids))
 	for i, id := range ids {
-		placeholders[i] = "?"
 		args[i] = id
 	}
-
-	// 直接物理删除这些笔记行。
-	// 注意：这里使用 DELETE 而不是软删除，
-	// 主要用于“清空数据”等场景，彻底移除表中记录。
-	// FTS 触发器会在 DELETE 时同步更新 notes_fts 索引。
-	query := fmt.Sprintf("DELETE FROM notes WHERE id IN (%s)", strings.Join(placeholders, ","))
-	result, err := s.db.Exec(query, args...)
+	result, err := s.db.Exec(fmt.Sprintf("DELETE FROM notes WHERE id IN (%s)", placeholders), args...)
 	if err != nil {
-		return 0, fmt.Errorf("failed to batch delete notes: %w", err)
+		return 0, errStorage("failed to batch delete notes", err)
 	}
-
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get affected rows: %w", err)
+		return 0, errStorage("failed to get affected rows", err)
 	}
-
 	return int(affected), nil
 }
 
-// BatchArchive archives multiple notes
+// BatchArchive 批量归档或取消归档。
 func (s *NoteService) BatchArchive(ids []int64, archive bool) (int, error) {
 	if len(ids) == 0 {
 		return 0, nil
 	}
-
-	placeholders := make([]string, len(ids))
-	args := make([]interface{}, len(ids)+2)
-	args[0] = archive
-	args[1] = time.Now()
-	for i, id := range ids {
-		placeholders[i] = "?"
-		args[i+2] = id
+	placeholders := strings.Repeat("?,", len(ids))
+	placeholders = placeholders[:len(placeholders)-1]
+	args := make([]interface{}, 0, len(ids)+2)
+	args = append(args, archive, time.Now())
+	for _, id := range ids {
+		args = append(args, id)
 	}
-
-	query := fmt.Sprintf("UPDATE notes SET is_archived = ?, updated_at = ? WHERE id IN (%s) AND is_deleted = 0", strings.Join(placeholders, ","))
-	result, err := s.db.Exec(query, args...)
+	result, err := s.db.Exec(fmt.Sprintf(
+		"UPDATE notes SET is_archived = ?, updated_at = ? WHERE id IN (%s) AND is_deleted = 0", placeholders), args...)
 	if err != nil {
-		return 0, fmt.Errorf("failed to batch archive notes: %w", err)
+		return 0, errStorage("failed to batch archive notes", err)
 	}
-
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get affected rows: %w", err)
+		return 0, errStorage("failed to get affected rows", err)
 	}
-
 	return int(affected), nil
 }
 
-// IsFTSEnabled returns whether FTS5 is enabled
-func (s *NoteService) IsFTSEnabled() bool {
-	return s.ftsEnabled
-}
-
-// SetSetting upserts a settings key/value pair.
-func (s *NoteService) SetSetting(key, value string) error {
-	if strings.TrimSpace(key) == "" {
-		return models.NewAppError(models.ErrorKindValidation, "setting key cannot be empty", nil)
-	}
-	_, err := s.db.Exec(`
-		INSERT INTO settings (key, value, updated_at)
-		VALUES (?, ?, ?)
-		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-	`, key, value, time.Now())
-	if err != nil {
-		return models.NewAppError(models.ErrorKindStorage, "failed to set setting", err)
-	}
-	return nil
-}
-
-// GetSetting retrieves a settings value by key.
-func (s *NoteService) GetSetting(key string) (string, error) {
-	if strings.TrimSpace(key) == "" {
-		return "", models.NewAppError(models.ErrorKindValidation, "setting key cannot be empty", nil)
-	}
-	var value string
-	if err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&value); err != nil {
-		if err == sql.ErrNoRows {
-			return "", models.NewAppError(models.ErrorKindNotFound, "setting not found", nil)
-		}
-		return "", models.NewAppError(models.ErrorKindStorage, "failed to get setting", err)
-	}
-	return value, nil
-}
-
-func draftScope(noteID *int64) string {
-	if noteID == nil {
-		return "global"
-	}
-	return fmt.Sprintf("note:%d", *noteID)
-}
-
-// SaveDraft creates or updates a draft payload for a note scope.
-func (s *NoteService) SaveDraft(noteID *int64, payload string) error {
-	scope := draftScope(noteID)
-	_, err := s.db.Exec(`
-		INSERT INTO drafts (scope, note_id, payload, updated_at)
-		VALUES (?, ?, ?, ?)
-		ON CONFLICT(scope) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at
-	`, scope, noteID, payload, time.Now())
-	if err != nil {
-		return fmt.Errorf("failed to save draft: %w", err)
-	}
-	return nil
-}
-
-// GetDraft returns the draft payload for a note scope.
-func (s *NoteService) GetDraft(noteID *int64) (string, error) {
-	scope := draftScope(noteID)
-	var payload string
-	if err := s.db.QueryRow(`SELECT payload FROM drafts WHERE scope = ?`, scope).Scan(&payload); err != nil {
-		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("draft not found")
-		}
-		return "", fmt.Errorf("failed to get draft: %w", err)
-	}
-	return payload, nil
-}
-
-// DeleteDraft removes a draft by scope.
-func (s *NoteService) DeleteDraft(noteID *int64) error {
-	scope := draftScope(noteID)
-	_, err := s.db.Exec(`DELETE FROM drafts WHERE scope = ?`, scope)
-	if err != nil {
-		return fmt.Errorf("failed to delete draft: %w", err)
-	}
-	return nil
-}
-
-// Restore restores a soft-deleted note.
-func (s *NoteService) Restore(id int64) error {
-	result, err := s.db.Exec("UPDATE notes SET is_deleted = 0, updated_at = ? WHERE id = ? AND is_deleted = 1", time.Now(), id)
-	if err != nil {
-		return fmt.Errorf("failed to restore note: %w", err)
-	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows: %w", err)
-	}
-	if affected == 0 {
-		return fmt.Errorf("note not found")
-	}
-	return nil
-}
-
-// BatchRestore restores multiple soft-deleted notes.
+// BatchRestore 批量恢复软删除笔记。
 func (s *NoteService) BatchRestore(ids []int64) (int, error) {
 	if len(ids) == 0 {
 		return 0, nil
@@ -824,51 +701,139 @@ func (s *NoteService) BatchRestore(ids []int64) (int, error) {
 	for _, id := range ids {
 		args = append(args, id)
 	}
-	query := fmt.Sprintf("UPDATE notes SET is_deleted = 0, updated_at = ? WHERE is_deleted = 1 AND id IN (%s)", placeholders)
-	result, err := s.db.Exec(query, args...)
+	result, err := s.db.Exec(fmt.Sprintf(
+		"UPDATE notes SET is_deleted = 0, updated_at = ? WHERE is_deleted = 1 AND id IN (%s)", placeholders), args...)
 	if err != nil {
-		return 0, fmt.Errorf("failed to batch restore notes: %w", err)
+		return 0, errStorage("failed to batch restore notes", err)
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get affected rows: %w", err)
+		return 0, errStorage("failed to get affected rows", err)
 	}
 	return int(affected), nil
 }
 
-// PurgeDeleted physically deletes soft-deleted notes before the given time.
+// PurgeDeleted 物理删除给定时间之前软删除的笔记。
 func (s *NoteService) PurgeDeleted(beforeTime time.Time) (int, error) {
 	result, err := s.db.Exec("DELETE FROM notes WHERE is_deleted = 1 AND updated_at <= ?", beforeTime)
 	if err != nil {
-		return 0, fmt.Errorf("failed to purge deleted notes: %w", err)
+		return 0, errStorage("failed to purge deleted notes", err)
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("failed to get affected rows: %w", err)
+		return 0, errStorage("failed to get affected rows", err)
 	}
 	return int(affected), nil
 }
 
-// ResetAllData drops note-related tables and recreates them,
-// effectively achieving a "delete table & rebuild" reset.
+// IsFTSEnabled 返回 FTS5 是否可用。
+func (s *NoteService) IsFTSEnabled() bool {
+	return s.ftsEnabled
+}
+
+// SetSetting upsert 一条设置项。
+func (s *NoteService) SetSetting(key, value string) error {
+	if strings.TrimSpace(key) == "" {
+		return errInvalid("setting key cannot be empty")
+	}
+	if _, err := s.db.Exec(`
+		INSERT INTO settings (key, value, updated_at)
+		VALUES (?, ?, ?)
+		ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+	`, key, value, time.Now()); err != nil {
+		return errStorage("failed to set setting", err)
+	}
+	return nil
+}
+
+// GetSetting 按 key 读取设置项。
+func (s *NoteService) GetSetting(key string) (string, error) {
+	if strings.TrimSpace(key) == "" {
+		return "", errInvalid("setting key cannot be empty")
+	}
+	var value string
+	if err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&value); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errNotFound("setting not found")
+		}
+		return "", errStorage("failed to get setting", err)
+	}
+	return value, nil
+}
+
+// draftScope 计算草稿作用域：nil 为全局，否则按笔记。
+func draftScope(noteID *int64) string {
+	if noteID == nil {
+		return "global"
+	}
+	return fmt.Sprintf("note:%d", *noteID)
+}
+
+// maxDraftBytes 草稿负载上限（防滥用）。
+const maxDraftBytes = 2 << 20 // 2 MiB
+
+// SaveDraft 保存草稿（upsert）。
+func (s *NoteService) SaveDraft(noteID *int64, payload string) error {
+	if len(payload) > maxDraftBytes {
+		return errInvalid("draft payload too large")
+	}
+	scope := draftScope(noteID)
+	if _, err := s.db.Exec(`
+		INSERT INTO drafts (scope, note_id, payload, updated_at)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(scope) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at
+	`, scope, noteID, payload, time.Now()); err != nil {
+		return errStorage("failed to save draft", err)
+	}
+	return nil
+}
+
+// GetDraft 读取草稿。
+func (s *NoteService) GetDraft(noteID *int64) (string, error) {
+	scope := draftScope(noteID)
+	var payload string
+	if err := s.db.QueryRow(`SELECT payload FROM drafts WHERE scope = ?`, scope).Scan(&payload); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errNotFound("draft not found")
+		}
+		return "", errStorage("failed to get draft", err)
+	}
+	return payload, nil
+}
+
+// DeleteDraft 删除草稿。
+func (s *NoteService) DeleteDraft(noteID *int64) error {
+	scope := draftScope(noteID)
+	if _, err := s.db.Exec(`DELETE FROM drafts WHERE scope = ?`, scope); err != nil {
+		return errStorage("failed to delete draft", err)
+	}
+	return nil
+}
+
+// ResetAllData 删除笔记相关表并重建（保留 settings），事务化执行。
 func (s *NoteService) ResetAllData() error {
-	// Drop FTS table first because it depends on notes content
-	if _, err := s.db.Exec(`DROP TABLE IF EXISTS notes_fts`); err != nil {
-		return fmt.Errorf("failed to drop notes_fts: %w", err)
+	tx, err := s.db.Begin()
+	if err != nil {
+		return errStorage("failed to begin reset", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.Exec(`DROP TABLE IF EXISTS notes_fts`); err != nil {
+		return errStorage("failed to drop notes_fts", err)
+	}
+	if _, err := tx.Exec(`DROP TABLE IF EXISTS notes`); err != nil {
+		return errStorage("failed to drop notes", err)
+	}
+	if _, err := tx.Exec(`DELETE FROM drafts`); err != nil {
+		return errStorage("failed to clear drafts", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return errStorage("failed to commit reset", err)
 	}
 
-	// Drop main notes table
-	if _, err := s.db.Exec(`DROP TABLE IF EXISTS notes`); err != nil {
-		return fmt.Errorf("failed to drop notes: %w", err)
-	}
-
-	// We保留 settings 表，只是清空笔记数据。
-	// 重新运行迁移，重建 notes/notes_fts 及索引和触发器。
 	if err := db.RunMigrations(s.db); err != nil {
-		return fmt.Errorf("failed to run migrations after reset: %w", err)
+		return errStorage("failed to run migrations after reset", err)
 	}
-
-	// Re-check FTS 状态
 	s.checkFTSEnabled()
 	return nil
 }

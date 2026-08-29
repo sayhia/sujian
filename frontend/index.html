@@ -1,11 +1,26 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="light-aurora">
-   <head>
+<html lang="zh-CN" data-theme="light" data-accent="crimson" data-font-size="medium" data-editor-width="medium">
+  <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/wails.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/style.css" />
     <title>素笺 Sujian</title>
+    <script>
+      // 首帧同步主题，避免样式闪烁（与 main.ts 逻辑一致）
+      try {
+        var raw = localStorage.getItem('sujian-settings-v2');
+        var saved = raw ? JSON.parse(raw) : {};
+        var theme = saved.theme || 'light';
+        var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme =
+          theme === 'system' ? (dark ? 'dark' : 'light') : theme;
+        var legacy = { purple: 'violet', blue: 'navy', green: 'olive', teal: 'emerald', brown: 'amber', red: 'crimson', 'cny-1': 'olive', 'cny-5': 'violet', 'cny-10': 'navy', 'cny-20': 'amber', 'cny-50': 'emerald', 'cny-100': 'crimson' };
+        var accent = saved.accent || 'crimson';
+        document.documentElement.dataset.accent = legacy[accent] || accent;
+        document.documentElement.dataset.fontSize = saved.fontSize || 'medium';
+        document.documentElement.dataset.editorWidth = saved.editorWidth || 'medium';
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -5,10 +5,6 @@
 // @ts-ignore: Unused imports
 import { Create as $Create } from "@wailsio/runtime";
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unused imports
-import * as time$0 from "../../../time/models.js";
-
 /**
  * Note represents a note entity
  */
@@ -22,8 +18,8 @@ export class Note {
      * quick or article
      */
     "type": NoteType;
-    "created_at": time$0.Time;
-    "updated_at": time$0.Time;
+    "created_at": string;
+    "updated_at": string;
     "is_archived": boolean;
     "is_deleted": boolean;
 
@@ -45,10 +41,10 @@ export class Note {
             this["type"] = NoteType.$zero;
         }
         if (!("created_at" in $$source)) {
-            this["created_at"] = null;
+            this["created_at"] = "0001-01-01T00:00:00.000Z";
         }
         if (!("updated_at" in $$source)) {
-            this["updated_at"] = null;
+            this["updated_at"] = "0001-01-01T00:00:00.000Z";
         }
         if (!("is_archived" in $$source)) {
             this["is_archived"] = false;

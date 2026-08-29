@@ -1,0 +1,175 @@
+{
+  "summary": {
+    "projectName": "panda-time-note",
+    "locale": "zh-CN",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 25,
+    "overview": "该 Wails v3 项目的交付控制层当前基本失守：约 3.8 万行全量重写停留在未提交工作区、无回滚点；唯一 CI 门禁在当前工作分支不可达且多点自相矛盾；代理指令层为空、测试信号断层。30 天会话窗口内无可观察的实质编码工作循环，本次为 session-limited 评审，行为类结论保持 Unobserved。",
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Workflows"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Workflows",
+          "scopes": [
+            "Project"
+          ],
+          "count": 2,
+          "paths": [
+            ".github/workflows/build.yml",
+            ".github/workflows/README.md"
+          ]
+        },
+        {
+          "surface": "Memories",
+          "scopes": [
+            "Project"
+          ],
+          "count": 5
+        },
+        {
+          "surface": "Custom Agents",
+          "scopes": [
+            "Project"
+          ],
+          "count": 0
+        }
+      ]
+    },
+    "assignmentSummaries": [],
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "任务理解",
+        "score": 42,
+        "summary": "无签入的代理指令入口，已提交文档描述已删除的旧架构并存在项目命名漂移；任务意图与验收边界在本窗口不可观察。",
+        "findingRefs": [
+          "no-agent-instruction-entry",
+          "workflow-doc-drift"
+        ]
+      },
+      {
+        "id": "controlled-execution",
+        "label": "可控执行",
+        "score": 48,
+        "summary": "Taskfile 编排链静态完整、工作区版文档已写明入口，但真实入口不在清单证据面上、未实跑验证，权限边界不可观察。",
+        "findingRefs": [
+          "entry-route-invisible"
+        ]
+      },
+      {
+        "id": "change-validation",
+        "label": "改动验证",
+        "score": 34,
+        "summary": "追踪范围内零测试、无 lint，CI 测试作业悬空；后端唯一测试未提交且未验证可运行，变更—校验闭环缺失。",
+        "findingRefs": [
+          "test-signal-broken"
+        ]
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "可靠交付",
+        "score": 28,
+        "summary": "全部重写成果未提交、无可评审单元与回滚点；唯一机械门禁 CI 在当前分支不可达且与项目现实多点矛盾。",
+        "findingRefs": [
+          "rewrite-uncommitted-no-recovery",
+          "ci-gate-unreachable-and-contradictory"
+        ]
+      },
+      {
+        "id": "learning-capture",
+        "label": "经验沉淀",
+        "score": 38,
+        "summary": "存在 5 条项目级 Memory（仅标题元数据可见，完整性复核无碰撞），但检索—应用—后效链完全不可观察，无可比较窗口。",
+        "findingRefs": []
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "rewrite-uncommitted-no-recovery",
+      "title": "约 3.8 万行重写成果零提交，一次误操作即不可恢复",
+      "severity": "High",
+      "reason": "事实：git status 显示 78 个文件、约 38085 行变更未提交，整个新 backend/ 目录与 REFACTOR_PLAN.md 均为 untracked；refactor/full-rewrite 与 main、dev 指向同一提交 ac1285a，即整个重写没有产生任何提交。推断：任何一次错误 checkout、stash 或清理都会不可逆丢失全部成果，评审者也没有任何可 review 的提交单元。拥有者：refactor/full-rewrite 分支的提交流程。不确定性：重写代码本身的质量与可构建性未评估。",
+      "expectedOutput": [
+        "工作区全部重写成果进入版本控制，形成可回滚、可评审的提交链。"
+      ],
+      "expectedArtifact": "提交序列",
+      "aiFixPrompt": "/better-harness fix this issue\n\n在 refactor/full-rewrite 分支上，按 REFACTOR_PLAN.md 的 Phase 边界把当前工作区拆成可评审的提交序列（先 backend/ 与 frontend/bindings，再前端分层与文档），不改动任何代码内容，不推送到远端。\n\n## Validation\n\n- git status 不再有 untracked 的源码文件\n- git log 中每个提交对应一个 Phase 边界，可单独 review 与回滚",
+      "dimensionRefs": [
+        "reliable-delivery"
+      ]
+    },
+    {
+      "id": "ci-gate-unreachable-and-contradictory",
+      "title": "唯一 CI 门禁在当前分支不可达，且多处与项目现实矛盾",
+      "severity": "High",
+      "reason": "事实：build.yml 触发分支为 main/develop，而仓库实际分支是 main/dev/refactor-full-rewrite（develop 不存在），当前工作分支零 CI 覆盖；test_js 在仓库根执行 npm install && npm test，但根 package.json 不存在、frontend 也无 test 脚本；归档步骤查找 sujian.exe/sujian.app，而 Taskfile 的 APP_NAME 是 panda-time-note，if/elif 无 else 会静默跳过归档；分支过滤使按 v* 标签发布的 release 路径静态不可达；matrix 中两条 macos-latest 条目相互覆盖；Windows 归档步骤使用 bash 语法却未声明 shell: bash。历史侧证：4 天内该文件被修改约 20 次，提交信息多为 fix/debug，origin/main 最新提交是对它的 Revert。不确定性：未打开外部 CI 运行日志，实际运行结果未验证。",
+      "expectedOutput": [
+        "工作分支上的变更能得到机械验证，发布与归档路径可达且失败可见。"
+      ],
+      "expectedArtifact": "CI Workflow",
+      "aiFixPrompt": "/better-harness fix this issue\n\n修复 .github/workflows/build.yml：触发分支加入 dev，并为 push 增加 tags: ['v*'] 使 release 路径可达；test_go 保持 go test -tags sqlite_fts5 ./...，test_js 改为 cd frontend && npm ci && npm run build 或删除该 job；归档名统一取自单一 APP_NAME 来源（panda-time-note）并为归档缺失增加显式失败；将 macOS arm64 拆为独立 matrix 条目；Windows 归档步骤显式声明 shell: bash。\n\n## Validation\n\n- 对修改后的 workflow 做 YAML 静态校验\n- 一次真实 CI 运行确认各 job 可达且不静默跳过（推送与外部触发需先获得单独授权）",
+      "dimensionRefs": [
+        "reliable-delivery"
+      ]
+    },
+    {
+      "id": "no-agent-instruction-entry",
+      "title": "代理无任何指令入口，关键构建约束只沉淀在 CI，已提交文档描述已删除的旧架构",
+      "severity": "Medium",
+      "reason": "事实：仓库内无任何 AGENTS.md 或项目 Rules（资产基线 entrypoints=0）；go test 必需的 -tags sqlite_fts5、macOS 的 CGO_LDFLAGS、Linux 的 xvfb 包装等约束只写在 build.yml；已提交版 README 描述旧应用架构，新版 README 与 REFACTOR_PLAN.md 停留在未提交状态；应用命名在 sujian（main.go/go.mod/CI 归档）与 panda-time-note（Taskfile/产物）之间漂移，build/config.yml 仍是 My Company/My Product 模板占位。推断：从已提交状态进入的代理会被路由到已删除的结构，直接执行 go test ./... 会失败。不确定性：无会话证据证明已有代理实际踩坑。",
+      "expectedOutput": [
+        "任何 fresh clone 进入的代理都能获得当前架构、入口命令与构建约束的权威入口。"
+      ],
+      "expectedArtifact": "AGENTS.md",
+      "aiFixPrompt": "/better-harness fix this issue\n\n新建根 AGENTS.md：声明唯一入口命令（task dev / task build、go test -tags sqlite_fts5 ./...、cd frontend && npm run build）、backend 分层边界（domain→db→repository→service→api）、frontend/bindings 为生成物不可手改、应用命名的单一来源。同时提交工作区版 README 与 REFACTOR_PLAN.md，并将 build/config.yml 的模板占位替换为实际产品信息。\n\n## Validation\n\n- AGENTS.md 中每条命令与 Taskfile / build.yml 实际命令一致\n- 全仓检索确认应用命名只有一个权威来源",
+      "dimensionRefs": [
+        "task-understanding"
+      ]
+    },
+    {
+      "id": "test-signal-broken",
+      "title": "追踪范围内零测试：后端唯一测试未提交，前端残留误导性空测试脚手架",
+      "severity": "Medium",
+      "reason": "事实：git ls-files 中没有任何测试文件；backend/repository/note_repository_test.go 为 untracked；frontend/package.json 无 test 脚本、无测试框架依赖，却残留 4 个空 __tests__/ 目录与空 src/test/ 目录；README 宣称的 go test -tags sqlite_fts5 ./... 对任何 clone 都是空命令。推断：代理无法用测试验证任何变更，且会因空脚手架误判存在测试体系而浪费探索成本。不确定性：该后端测试文件未被执行，可运行性与通过性未验证。",
+      "expectedOutput": [
+        "变更可以被至少一条真实存在、可运行的项目自有检查覆盖。"
+      ],
+      "expectedArtifact": "测试基线",
+      "aiFixPrompt": "/better-harness fix this issue\n\n提交 backend/repository/note_repository_test.go 并在本地运行 go test -tags sqlite_fts5 ./backend/... 确认可运行；对前端，要么删除空的 __tests__/ 与 src/test/ 目录并在 README 中明确当前无前端测试，要么建立最小 vitest 基线并在 frontend/package.json 中增加 test 脚本。\n\n## Validation\n\n- 在 clean checkout 上 go test -tags sqlite_fts5 ./... 有非空执行结果\n- 仓库中不再存在空的测试目录",
+      "dimensionRefs": [
+        "change-validation"
+      ]
+    },
+    {
+      "id": "entry-route-invisible",
+      "title": "真实构建入口（task/wails3）不在清单证据面上，根目录残留误导环境判断",
+      "severity": "Low",
+      "reason": "事实：清单层只暴露 frontend/package.json 与 go.mod；task dev/build、sqlite_fts5 构建标签与平台 Taskfile 编排对只读清单的代理不可发现；根 node_modules/ 存在但对应的根 package.json 已不存在；bin/ 内残留已签名的历史 .app 产物。推断：只看清单的代理会走 npm 单独构建路径，错过 wails3 主循环。不确定性：task dev 是否实际可运行未验证。",
+      "expectedOutput": [
+        "代理从任何入口进入都会被路由到 Taskfile 主循环，而不是部分的 npm 构建路径。"
+      ],
+      "expectedArtifact": "入口声明",
+      "aiFixPrompt": "/better-harness fix this issue\n\n在根 AGENTS.md（或 README 顶部）集中声明唯一入口命令：task dev、task build、task package，以及 go test -tags sqlite_fts5 ./... 与 cd frontend && npm run build 的关系；核实根 node_modules/ 与 bin/ 历史产物确属残留后清理（任何删除动作需先单独确认）。\n\n## Validation\n\n- fresh clone 后按声明命令能直接定位 Taskfile 编排链\n- 根目录不再存在没有对应 manifest 的依赖目录",
+      "dimensionRefs": [
+        "controlled-execution"
+      ]
+    },
+    {
+      "id": "workflow-doc-drift",
+      "title": "构建流程文档与 build.yml 漂移，含未替换占位符与不成立的承诺",
+      "severity": "Low",
+      "reason": "事实：.github/workflows/README.md 含未替换的 $GO_VERSION/$NODE_VERSION 占位符；声称创建 v 标签会触发发布，与 build.yml 的分支过滤矛盾；声称前端用 npm ci、所有输出经 UPX 压缩，但 build.yml 中 Linux job 未安装 upx 且未见显式 upx 调用。推断：作为项目内唯一的构建流程文档，它会把读者与代理路由到错误认知。不确定性：UPX 可能由 wails3 build 内部调用，只能确认 Linux 分支描述与安装步骤不一致。",
+      "expectedOutput": [
+        "构建流程文档与 workflow 实况一致，不再误导读者与代理。"
+      ],
+      "expectedArtifact": "流程文档",
+      "aiFixPrompt": "/better-harness fix this issue\n\n以 build.yml 当前实况为准重写 .github/workflows/README.md：修正触发条件描述、删除 $GO_VERSION/$NODE_VERSION 占位符、按各平台 job 的实际步骤描述依赖安装与压缩行为。\n\n## Validation\n\n- 文档中每条触发条件与步骤都能在 build.yml 中找到对应\n- 文档中不再存在模板占位符",
+      "dimensionRefs": [
+        "task-understanding"
+      ]
+    }
+  ]
+}
