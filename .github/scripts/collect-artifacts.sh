@@ -4,10 +4,10 @@
 # Usage: collect-artifacts.sh <platform-name> <version>
 #   platform-name: 矩阵名，如 linux-amd64 / darwin-arm64 / windows-amd64
 #
-# 产物映射（来自 Taskfile 打包输出）：
+# 产物映射（来自 Taskfile 打包输出，APP_NAME=sujian）：
 #   - linux-*   → bin/*.AppImage、bin/*.deb、bin/*.rpm
-#   - darwin-*  → bin/sujian.app（压缩为 zip）
-#   - windows-* → bin/sujian.exe、bin/*-installer.exe（NSIS 安装器）
+#   - darwin-*  → bin/sujian.app（压缩为 zip）+ bin/sujian.dmg（磁盘镜像）
+#   - windows-* → bin/sujian.exe、bin/*-installer.exe（NSIS 安装器，由 project.nsi OutFile 输出到 bin/）
 
 set -euo pipefail
 
@@ -28,6 +28,9 @@ case "$NAME" in
   darwin-*)
     [ -d bin/sujian.app ] || { echo "!! missing bin/sujian.app" >&2; exit 1; }
     zip -qry "$OUT/sujian-${NAME}-${VERSION}.zip" bin/sujian.app
+    if [ -f bin/sujian.dmg ]; then
+      cp bin/sujian.dmg "$OUT/sujian-${NAME}-${VERSION}.dmg"
+    fi
     ;;
   windows-*)
     if [ -f bin/sujian.exe ]; then
@@ -43,21 +46,6 @@ case "$NAME" in
     exit 1
     ;;
 esac
-
-# 生成更新清单元数据（主自动更新资产的 sha256 + size），供 publish job 合并为 latest.json
-case "$NAME" in
-  darwin-*)  main="$OUT/sujian-${NAME}-${VERSION}.zip" ;;
-  windows-*) main="$OUT/sujian-${NAME}-${VERSION}-installer.exe" ;;
-  linux-*)   main="$OUT/sujian-${NAME}-${VERSION}.AppImage" ;;
-esac
-if [ -n "${main:-}" ] && [ -f "$main" ]; then
-  sha="$(shasum -a 256 "$main" | cut -d' ' -f1)"
-  size="$(wc -c < "$main" | tr -d ' ')"
-  mkdir -p dist/meta
-  printf '{"platform":"%s","filename":"%s","sha256":"%s","size":%s}\n' \
-    "$NAME" "$(basename "$main")" "$sha" "$size" > "dist/meta/${NAME}.json"
-  echo ">> meta: dist/meta/${NAME}.json (sha256=$sha size=$size)"
-fi
 
 # 校验：必须有产物，否则 job 失败（上传步骤 if-no-files-found: error 兜底）
 count="$(ls -1 "$OUT" | wc -l | tr -d ' ')"

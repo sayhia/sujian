@@ -52,7 +52,8 @@ async function doDownload() {
     progress.value = pct < 0 ? progress.value : pct;
   });
   try {
-    await updaterApi.downloadUpdate(info.value);
+    // 下载 + 校验 + 暂存，一步完成
+    await updaterApi.installUpdate();
     stage.value = 'downloaded';
   } catch (e: any) {
     errorMsg.value = e?.message || String(e);
@@ -68,8 +69,8 @@ async function doDownload() {
 async function doInstall() {
   stage.value = 'installing';
   try {
-    await updaterApi.applyUpdate();
-    // 成功后进程退出，后续不会执行
+    // 重启并替换二进制 —— 成功后进程退出，后续不会执行
+    await updaterApi.restartApp();
   } catch (e: any) {
     errorMsg.value = e?.message || String(e);
     stage.value = 'error';

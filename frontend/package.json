@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@wailsio/runtime": "^3.0.0-alpha.78",
+    "@wailsio/runtime": "3.0.0-alpha2.119",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1",
     "pinia": "^3.0.4",

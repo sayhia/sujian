@@ -6,19 +6,27 @@
 #   1. 五平台矩阵构建（Linux amd64/arm64、macOS arm64/amd64、Windows amd64）
 #   2. 完全复用项目 Taskfile + wails3 CLI 的打包链路（与本地 `task package` 行为一致）：
 #        - Linux   → AppImage + deb + rpm
-#        - macOS   → .app bundle（adhoc 签名）+ zip
+#        - macOS   → .app bundle（adhoc 签名）+ zip + dmg
 #        - Windows → 可执行文件 + NSIS 安装包
-#   3. 版本号从 tag 自动注入（config.yml / nfpm / Info.plist / NSIS）
+#   3. 版本号从 tag 自动注入（config.yml / nfpm / Info.plist / NSIS / Go 二进制 ldflags）
 #   4. 汇总发布到 GitHub Release（自动生成 release notes）
+#
+# 自动更新：应用内置 Wails v3 updater（GitHub provider），直接读取本仓库的
+# Releases 并按平台挑选资产（darwin zip / windows 便携 exe / linux AppImage），
+# 无需生成 latest.json 清单。资产命名规则见 .github/scripts/collect-artifacts.sh，
+# 挑选规则见 backend/services/update_service.go 的 SujianAssetMatcher。
 #
 # 前置条件：
 #   - Go 1.25+ / Node 22+（runner 自带，setup 步骤安装）
-#   - wails3 CLI 与 task CLI 由 go install 安装（版本与 go.mod 锁定一致）
+#   - wails3 CLI 与 task CLI 由 go install 安装；wails3 使用最新版（WAILS_VERSION）
+#   - Linux 需要 GTK/WebKit 开发库（CGO 编译 GUI 后端 + wails3 CLI 自身编译）
+#   - Windows 需要 mingw（mattn/go-sqlite3 是 CGO 依赖）+ NSIS（choco 安装，
+#     注意手动把 NSIS 目录加入 PATH，choco 不会自动加）
 #   - Linux AppImage 需要 FUSE（已通过 APPIMAGE_EXTRACT_AND_RUN=1 规避，无需额外依赖）
 #   - macOS 产物为 adhoc 签名；如需公证/正式签名，请配置 Apple 证书 secrets 并补充对应步骤
 #
-# 注意：macos-13 为 Intel (x64) runner，若 GitHub 下线该镜像，可将 darwin-amd64 行改为
-#       原生 amd64 runner（如 macos-15-intel）或移除该矩阵项。
+# 注意：darwin-amd64 使用 macos-15-intel（Intel x64 runner，macos-13 已弃用、排队过长）。
+#       若 GitHub 下线 Intel 镜像，可移除该矩阵项或改用交叉编译。
 
 name: Release
 
@@ -33,6 +41,9 @@ permissions:
 env:
   GO_VERSION: "1.25"
   NODE_VERSION: "22"
+  # wails3 CLI 最新版（2026-08-27 发布）。与 go.mod 中的库版本解耦；
+  # 若后续打包命令出现兼容问题，可改回 go.mod 中的库版本
+  WAILS_VERSION: v3.0.0-beta.15
 
 jobs:
   build:
@@ -52,7 +63,7 @@ jobs:
             os: macos-14
             package: darwin
           - name: darwin-amd64
-            os: macos-13
+            os: macos-15-intel
             package: darwin
           - name: windows-amd64
             os: windows-latest
@@ -74,28 +85,34 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # Windows：mingw-w64 gcc（CGO/sqlite3 必需）+ NSIS（安装包）
+      # Linux 需要两套 GTK/WebKit 开发库：
+      #   - gtk4 + webkitgtk-6.0：wails3 CLI 自身编译（internal/operatingsystem 经 pkg-config 链接）
+      #   - gtk3 + webkit2gtk-4.1：项目 go.mod 的 Wails 库版本编译 GUI 后端
+      - name: Install WebKit/GTK dev packages (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libgtk-4-dev libwebkitgtk-6.0-dev
+
+      # Windows：mingw-w64 gcc（mattn/go-sqlite3 的 CGO 必需）+ NSIS（安装包）。
+      # choco 安装 NSIS 后不会自动加入 PATH，必须手动追加，否则 makensis 找不到
       - name: Install Windows toolchain
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           choco install mingw -y --no-progress
           choco install nsis -y --no-progress
-
-      # Linux：go install wails3 CLI 编译需 gtk/webkit dev headers；AppImage 需 libfuse
-      - name: Install Linux build deps
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config build-essential
-          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2
+          Add-Content $env:GITHUB_PATH 'C:\Program Files (x86)\NSIS'
 
       # 安装 task + wails3 CLI（与本地开发工具链一致）
       - name: Install task & wails3 CLI
         shell: bash
         run: |
           go install github.com/go-task/task/v3/cmd/task@latest
-          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.59
+          go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       # 将 tag 版本（去掉 v 前缀）注入各打包配置文件
@@ -103,30 +120,34 @@ jobs:
         shell: bash
         run: bash .github/scripts/set-version.sh "${GITHUB_REF_NAME#v}"
 
-      # 暴露版本号给后续 task go build（Taskfile 的 BUILD_FLAGS 用 -X 注入 updater.Version）
-      - name: Set version env
-        shell: bash
-        run: echo "SUJIAN_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
 
       # 复用项目 Taskfile 打包（内部含：bindings 生成 → 前端构建 → go build → 平台打包）
+      # VERSION 以 task 变量传入，由平台 Taskfile 的 BUILD_FLAGS 经 ldflags 注入 Go 二进制
       # Linux 拆分为 build + deb/rpm/AppImage，跳过 aur（如需可追加 task linux:create:aur）
+      # macOS 打包 .app 并生成 .dmg（hdiutil，拖入 Applications 安装）
       - name: Package (${{ matrix.package }})
         shell: bash
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
-          if [ "${{ matrix.package }}" = "linux" ]; then
-            task linux:build
-            task linux:create:deb
-            task linux:create:rpm
-            task linux:create:appimage
-          else
-            task ${{ matrix.package }}:package
-          fi
+          V="VERSION=${GITHUB_REF_NAME#v}"
+          case "${{ matrix.package }}" in
+            linux)
+              task linux:build "$V"
+              task linux:create:deb "$V"
+              task linux:create:rpm "$V"
+              task linux:create:appimage "$V"
+              ;;
+            darwin)
+              task darwin:package:dmg "$V"
+              ;;
+            windows)
+              task windows:package "$V"
+              ;;
+          esac
 
       # 统一收集产物到 dist/release/（重命名带平台与版本号）
       - name: Collect artifacts
@@ -137,7 +158,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-artifacts-${{ matrix.name }}
-          path: dist/
+          path: dist/release/
           if-no-files-found: error
 
   publish:
@@ -154,45 +175,8 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      # 合并各平台 meta.json → latest.json（应用内 CheckForUpdates 拉取的更新清单）
-      - name: Generate update manifest
-        shell: bash
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          REPO="$GITHUB_REPOSITORY"
-          TAG="$GITHUB_REF_NAME"
-          export VERSION REPO TAG
-          node -e '
-            const fs = require("fs"), path = require("path");
-            const metaDir = "artifacts/meta";
-            const platforms = {};
-            if (fs.existsSync(metaDir)) {
-              for (const f of fs.readdirSync(metaDir)) {
-                if (!f.endsWith(".json")) continue;
-                const m = JSON.parse(fs.readFileSync(path.join(metaDir, f), "utf8"));
-                platforms[m.platform] = {
-                  url: `https://github.com/${process.env.REPO}/releases/download/${process.env.TAG}/${m.filename}`,
-                  filename: m.filename,
-                  sha256: m.sha256,
-                  size: m.size,
-                };
-              }
-            }
-            const latest = {
-              version: process.env.VERSION,
-              releasedAt: new Date().toISOString(),
-              releaseUrl: `https://github.com/${process.env.REPO}/releases/tag/${process.env.TAG}`,
-              notes: "",
-              platforms,
-            };
-            fs.writeFileSync("latest.json", JSON.stringify(latest, null, 2));
-            console.log("Generated latest.json with", Object.keys(platforms).length, "platform(s)");
-          '
-
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/release/*
-            latest.json
+          files: artifacts/*
           generate_release_notes: true
