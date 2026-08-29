@@ -82,6 +82,14 @@ jobs:
           choco install mingw -y --no-progress
           choco install nsis -y --no-progress
 
+      # Linux：go install wails3 CLI 编译需 gtk/webkit dev headers；AppImage 需 libfuse
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config build-essential
+          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2
+
       # 安装 task + wails3 CLI（与本地开发工具链一致）
       - name: Install task & wails3 CLI
         shell: bash

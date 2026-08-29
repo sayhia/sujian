@@ -1,48 +1,65 @@
-import * as UpdaterHandler from '../../bindings/sujian/backend/handlers/updaterhandler';
-import { Events } from '@wailsio/runtime';
-
-export type { UpdateInfo, PlatformAsset } from '../../bindings/sujian/backend/handlers/updaterhandler';
-
-/** 下载进度事件名（与后 updater_handler.go 的 eventDownloadProgress 一致）。 */
-const EVENT_PROGRESS = 'updater:download-progress';
+import { Call, Events } from '@wailsio/runtime';
 
 /**
- * 自动更新 API 层。
+ * 自动更新 API 层（自包含，不依赖 bindings/updaterhandler.ts）。
  *
- * 在非 Wails 环境（浏览器 dev 预览）下，所有方法优雅降级：
- *   - currentVersion → 'dev'
- *   - checkForUpdates → null（无更新）
- *   - download/apply → no-op
- * 这样 AboutSection 在浏览器预览时不会因缺少后端而报错。
+ * 直接用 @wailsio/runtime 的 Call.ByName 按方法全名调用后端 UpdaterHandler，
+ * 类型在本文件自定义。这样无论 release workflow 是否重新生成 bindings，
+ * 本模块都不受影响（wails3 generate 不会动 src/services 下文件）。
+ *
+ * 方法全名（FQN）：sujian/backend/handlers.UpdaterHandler.<Method>
+ * （由 wails3 generator 的 fqn := pkg.Path + "." + typeName + "." + methodName 构造）
+ *
+ * 在非 Wails 环境（浏览器 dev 预览）下优雅降级，不报错。
  */
+const FQN = 'sujian/backend/handlers.UpdaterHandler.';
+const EVENT_PROGRESS = 'updater:download-progress';
+
+/** 单个平台的下载资产信息。 */
+export interface PlatformAsset {
+  url: string;
+  filename: string;
+  sha256: string;
+  size: number;
+}
+
+/** 检查更新的返回结果。 */
+export interface UpdateInfo {
+  available: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  releaseUrl: string;
+  notes: string;
+  asset: PlatformAsset;
+}
+
 export const updaterApi = {
   /** 获取当前应用版本号。 */
   async currentVersion(): Promise<string> {
     try {
-      return await UpdaterHandler.CurrentVersion();
+      return await Call.ByName(FQN + 'CurrentVersion');
     } catch {
       return 'dev';
     }
   },
 
   /** 检查更新，返回更新信息（无更新或失败时返回 null）。 */
-  async checkForUpdates(): Promise<UpdaterHandler.UpdateInfo | null> {
+  async checkForUpdates(): Promise<UpdateInfo | null> {
     try {
-      const info = await UpdaterHandler.CheckForUpdates();
-      return info;
+      return await Call.ByName(FQN + 'CheckForUpdates');
     } catch {
       return null;
     }
   },
 
   /** 下载更新资产。下载进度通过 onDownloadProgress 监听。 */
-  async downloadUpdate(info: UpdaterHandler.UpdateInfo): Promise<void> {
-    await UpdaterHandler.DownloadUpdate(info.asset.url, info.asset.sha256, info.asset.filename);
+  async downloadUpdate(info: UpdateInfo): Promise<void> {
+    await Call.ByName(FQN + 'DownloadUpdate', info.asset.url, info.asset.sha256, info.asset.filename);
   },
 
   /** 安装已下载的更新并重启应用。 */
   async applyUpdate(): Promise<void> {
-    await UpdaterHandler.ApplyUpdate();
+    await Call.ByName(FQN + 'ApplyUpdate');
   },
 
   /**
