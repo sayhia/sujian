@@ -69,14 +69,15 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install mingw -y --no-progress
 
-      # Linux 的 Wails GUI 后端经 cgo 链接 GTK/WebKit，go vet / go build 需要
-      # 对应的开发库（pkg-config 找不到 gtk+-3.0 / webkit2gtk-4.1 会直接失败）
+      # Linux 的 Wails GUI 后端经 cgo 链接 GTK/WebKit（alpha2 线已切换到 GTK4），
+      # go vet / go build 需要 gtk4 + webkitgtk-6.0 开发库
       - name: Install WebKit/GTK dev packages (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+            pkg-config libgtk-4-dev libwebkitgtk-6.0-dev \
+            libgtk-3-dev libwebkit2gtk-4.1-dev
 
       - name: Install frontend dependencies
         working-directory: frontend
